@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "59522132715",
+    "project_id": "furnitruck",
+    "storage_bucket": "furnitruck.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:59522132715:android:cab5940a4a309a8391acae",
+        "android_client_info": {
+          "package_name": "com.example.furniture_stock_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-L6TGtvUomQVHMf4Aq79HqnzOb04SbVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
