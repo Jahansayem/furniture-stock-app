@@ -70,4 +70,3 @@ The app uses a comprehensive database schema with:
 ## License
 
 This project is created for furniture shop stock management purposes.
-
