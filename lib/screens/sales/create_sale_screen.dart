@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:furniture_stock_app/constants/onesignal_config.dart';
-import 'package:furniture_stock_app/services/onesignal_service.dart';
+import '../../constants/onesignal_config.dart';
+import '../../services/onesignal_service.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/product_provider.dart';
@@ -22,10 +22,14 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
   final _quantityController = TextEditingController();
   final _unitPriceController = TextEditingController();
   final _notesController = TextEditingController();
+  
+  // COD field
+  final _codAmountController = TextEditingController();
 
   String? _selectedProductId;
   String? _selectedLocationId;
   String _saleType = 'offline'; // 'online_cod' or 'offline'
+  String _deliveryType = 'home_delivery'; // 'point_delivery' or 'home_delivery'
 
   @override
   void initState() {
@@ -45,6 +49,8 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
     _quantityController.dispose();
     _unitPriceController.dispose();
     _notesController.dispose();
+    // COD controller
+    _codAmountController.dispose();
     super.dispose();
   }
 
@@ -61,7 +67,33 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
           .products
           .firstWhere((p) => p.id == productId);
       _unitPriceController.text = product.price.toString();
+      _updateCodAmount();
     }
+  }
+
+  void _updateCodAmount() {
+    if (_saleType == 'online_cod' && 
+        _unitPriceController.text.isNotEmpty && 
+        _quantityController.text.isNotEmpty) {
+      try {
+        final unitPrice = double.parse(_unitPriceController.text);
+        final quantity = int.parse(_quantityController.text);
+        final totalAmount = unitPrice * quantity;
+        _codAmountController.text = totalAmount.toStringAsFixed(2);
+      } catch (e) {
+        // Invalid input, keep COD amount empty
+      }
+    }
+  }
+
+  void _onSaleTypeChanged(String? value) {
+    setState(() {
+      _saleType = value!;
+      if (_saleType == 'online_cod') {
+        // Auto-update COD amount
+        _updateCodAmount();
+      }
+    });
   }
 
   void _submitSale() async {
@@ -88,6 +120,15 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
           ? null
           : _customerAddressController.text,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
+      // Courier fields (only used for online_cod) - use customer details as recipient
+      deliveryType: _saleType == 'online_cod' ? _deliveryType : null,
+      recipientName: _saleType == 'online_cod' ? _customerNameController.text : null,
+      recipientPhone: _saleType == 'online_cod' ? _customerPhoneController.text : null,
+      recipientAddress: _saleType == 'online_cod' ? _customerAddressController.text : null,
+      codAmount: _saleType == 'online_cod' && _codAmountController.text.isNotEmpty
+          ? double.parse(_codAmountController.text) : null,
+      courierNotes: _saleType == 'online_cod' && _notesController.text.isNotEmpty
+          ? _notesController.text : null,
     );
 
     if (!mounted) return;
@@ -133,10 +174,13 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
       _quantityController.clear();
       _unitPriceController.clear();
       _notesController.clear();
+      // Clear courier fields
+      _codAmountController.clear();
       setState(() {
         _selectedProductId = null;
         _selectedLocationId = null;
         _saleType = 'offline';
+        _deliveryType = 'home_delivery';
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,11 +247,7 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
                                   title: const Text('Offline Sale'),
                                   value: 'offline',
                                   groupValue: _saleType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _saleType = value!;
-                                    });
-                                  },
+                                  onChanged: _onSaleTypeChanged,
                                 ),
                               ),
                               Expanded(
@@ -215,11 +255,7 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
                                   title: const Text('Online COD'),
                                   value: 'online_cod',
                                   groupValue: _saleType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _saleType = value!;
-                                    });
-                                  },
+                                  onChanged: _onSaleTypeChanged,
                                 ),
                               ),
                             ],
@@ -309,6 +345,7 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
+                                  onChanged: (_) => _updateCodAmount(),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter quantity';
@@ -361,16 +398,16 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Customer Details
+                  // Customer Details (merged with courier details for online COD)
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Customer Details',
-                            style: TextStyle(
+                          Text(
+                            _saleType == 'online_cod' ? 'Customer & Delivery Details' : 'Customer Details',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -378,13 +415,17 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _customerNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Customer Name',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: _saleType == 'online_cod' ? 'Customer/Recipient Name' : 'Customer Name',
+                              border: const OutlineInputBorder(),
+                              hintText: _saleType == 'online_cod' ? 'Person who will receive the delivery' : null,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter customer name';
+                              }
+                              if (_saleType == 'online_cod' && value.length > 100) {
+                                return 'Name must be less than 100 characters';
                               }
                               return null;
                             },
@@ -392,36 +433,94 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _customerPhoneController,
-                            decoration: const InputDecoration(
-                              labelText: 'Customer Phone (Optional)',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: _saleType == 'online_cod' ? 'Phone Number (Required for delivery)' : 'Customer Phone (Optional)',
+                              border: const OutlineInputBorder(),
+                              hintText: _saleType == 'online_cod' ? 'Exactly 11 digits for courier service' : null,
                             ),
                             keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (_saleType == 'online_cod') {
+                                if (value == null || value.isEmpty) {
+                                  return 'Phone number is required for online COD';
+                                }
+                                if (value.length != 11 || !RegExp(r'^\d{11}$').hasMatch(value)) {
+                                  return 'Please enter exactly 11 digits';
+                                }
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
-                          if (_saleType == 'online_cod') ...[
-                            TextFormField(
-                              controller: _customerAddressController,
-                              decoration: const InputDecoration(
-                                labelText: 'Delivery Address',
-                                border: OutlineInputBorder(),
-                              ),
-                              maxLines: 3,
-                              validator: (value) {
-                                if (_saleType == 'online_cod' &&
-                                    (value == null || value.isEmpty)) {
-                                  return 'Please enter delivery address for COD orders';
+                          TextFormField(
+                            controller: _customerAddressController,
+                            decoration: InputDecoration(
+                              labelText: _saleType == 'online_cod' ? 'Delivery Address (Required)' : 'Customer Address (Optional)',
+                              border: const OutlineInputBorder(),
+                              hintText: _saleType == 'online_cod' ? 'Full address for courier delivery' : null,
+                            ),
+                            maxLines: 3,
+                            validator: (value) {
+                              if (_saleType == 'online_cod') {
+                                if (value == null || value.isEmpty) {
+                                  return 'Delivery address is required for online COD';
                                 }
-                                return null;
-                              },
+                                if (value.length > 250) {
+                                  return 'Address must be less than 250 characters';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
+                          
+                          // Delivery Type Selection (only for Online COD)
+                          if (_saleType == 'online_cod') ...[
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Delivery Type',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: RadioListTile<String>(
+                                    title: const Text('Point Delivery'),
+                                    subtitle: const Text('Collection Point'),
+                                    value: 'point_delivery',
+                                    groupValue: _deliveryType,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _deliveryType = value!;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                Expanded(
+                                  child: RadioListTile<String>(
+                                    title: const Text('Home Delivery'),
+                                    subtitle: const Text('Door to Door'),
+                                    value: 'home_delivery',
+                                    groupValue: _deliveryType,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _deliveryType = value!;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
                           ],
+                          
+                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _notesController,
-                            decoration: const InputDecoration(
-                              labelText: 'Notes (Optional)',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: _saleType == 'online_cod' ? 'Special Instructions (Optional)' : 'Notes (Optional)',
+                              border: const OutlineInputBorder(),
+                              hintText: _saleType == 'online_cod' ? 'Any special delivery instructions' : null,
                             ),
                             maxLines: 2,
                           ),
@@ -429,6 +528,105 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
                       ),
                     ),
                   ),
+
+                  // COD Amount (only for Online COD)
+                  if (_saleType == 'online_cod') ...[
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Payment Details',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // COD Amount
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _codAmountController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'COD Amount',
+                                      border: OutlineInputBorder(),
+                                      prefixText: '৳ ',
+                                      hintText: 'Auto-calculated from total',
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (_saleType == 'online_cod') {
+                                        if (value == null || value.isEmpty) {
+                                          return 'COD amount is required';
+                                        }
+                                        final amount = double.tryParse(value);
+                                        if (amount == null || amount < 0) {
+                                          return 'Enter valid amount';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    _updateCodAmount();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('COD amount updated from total'),
+                                        duration: Duration(seconds: 1),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.refresh, size: 16),
+                                  label: const Text('Auto'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey[600],
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 12),
+                            
+                            // Info card
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                border: Border.all(color: Colors.blue[200]!),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.info_outline, 
+                                       color: Colors.blue[700], size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'This order will be automatically submitted to Steadfast courier service.',
+                                      style: TextStyle(
+                                        color: Colors.blue[700],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
 

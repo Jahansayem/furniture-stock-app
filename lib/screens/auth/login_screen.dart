@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                      Text(
+                      SelectableText(
                         'Welcome Back',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: AppTheme.darkBlue,
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       
                       const SizedBox(height: 8),
                       
-                      Text(
+                      SelectableText(
                         'Sign in to your account',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey[600],
@@ -202,10 +202,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 32),
               
               // Sign Up Link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Text(
+                  SelectableText(
                     "Don't have an account? ",
                     style: TextStyle(color: Colors.grey[600]),
                   ),
@@ -233,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Icon(Icons.error_outline, color: Colors.red[700], size: 20),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
+                            child: SelectableText(
                               authProvider.errorMessage!,
                               style: TextStyle(color: Colors.red[700]),
                             ),
@@ -303,7 +304,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter your email address to receive a password reset link.'),
+            const SelectableText('Enter your email address to receive a password reset link.'),
             const SizedBox(height: 16),
             TextFormField(
               controller: _emailController,

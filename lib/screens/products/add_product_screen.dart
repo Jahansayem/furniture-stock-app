@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:furniture_stock_app/constants/onesignal_config.dart';
-import 'package:furniture_stock_app/services/onesignal_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../config/supabase_config.dart';
 import '../../providers/product_provider.dart';
+import '../../services/onesignal_service.dart';
 import '../../utils/app_theme.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -359,12 +360,28 @@ class _AddProductScreenState extends State<AddProductScreen> {
     // Clear any previous errors
     productProvider.clearError();
 
-    // For now, we'll store the image path as a placeholder
-    // In a real app, you would upload the image to Supabase Storage
+    // Upload image to Supabase Storage if selected
     String? imageUrl;
     if (_selectedImage != null) {
-      // TODO: Upload image to Supabase Storage and get URL
-      imageUrl = _selectedImage!.path; // Placeholder
+      try {
+        final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final file = File(_selectedImage!.path);
+        
+        await Supabase.instance.client.storage
+            .from(SupabaseConfig.productImagesBucket)
+            .upload(fileName, file);
+        
+        imageUrl = Supabase.instance.client.storage
+            .from(SupabaseConfig.productImagesBucket)
+            .getPublicUrl(fileName);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload image: $e')),
+          );
+        }
+        return; // Don't proceed if image upload fails
+      }
     }
 
     final success = await productProvider.addProduct(
@@ -382,22 +399,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     if (success && mounted) {
-      await sendOneSignalNotificationToAllUsers(
-        appId: OneSignalConfig.appId,
-        restApiKey: OneSignalConfig.restApiKey,
-        title: 'Low stock product added successfully',
-        message: 'A new product has been added to low stock',
+      // Notify all users (server-side via Supabase Edge Function)
+      await OneSignalService.sendNotificationToAll(
+        title: 'Product added successfully',
+        message: 'A new product has been added',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Product added successfully!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/products');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product added successfully!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/products');
+        }
       }
     }
   }

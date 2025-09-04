@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:furniture_stock_app/constants/onesignal_config.dart';
-import 'package:furniture_stock_app/services/onesignal_service.dart';
+import '../../constants/onesignal_config.dart';
+import '../../services/onesignal_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -130,16 +130,20 @@ class _StockMovementScreenState extends State<StockMovementScreen> {
           message:
               'প্রোডাক্ট টি সফলভাবে এক জায়গায় থেকে অন্য জায়গায় নেওয়া হয়েছে',
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Stock moved successfully!")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Stock moved successfully!")),
+          );
+        }
         _resetForm();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text("Failed to move stock: ${stockProvider.errorMessage}")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text("Failed to move stock: ${stockProvider.errorMessage}")),
+          );
+        }
       }
     }
   }
@@ -201,9 +205,11 @@ class _StockMovementScreenState extends State<StockMovementScreen> {
         title: 'সফলভাবে প্রোডাক্ট স্টক যুক্ত করা হয়েছে',
         message: 'কারখানায় তৈরি কৃত প্রোডাক্ট সফলভাবে স্টকে যুক্ত করা হয়েছে',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Production added successfully!")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Production added successfully!")),
+        );
+      }
       _resetForm();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

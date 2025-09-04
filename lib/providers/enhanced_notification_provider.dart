@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/logger.dart';
+
 class NotificationModel {
   final String id;
   final String userId;
@@ -194,7 +196,7 @@ class EnhancedNotificationProvider extends ChangeNotifier {
   Future<void> initializeRealtimeSubscription() async {
     final user = _supabase.auth.currentUser;
     if (user == null) {
-      print('⚠️ No authenticated user - cannot subscribe to notifications');
+      AppLogger.warning('No authenticated user - cannot subscribe to notifications');
       return;
     }
 
@@ -215,8 +217,7 @@ class EnhancedNotificationProvider extends ChangeNotifier {
               value: user.id,
             ),
             callback: (payload) {
-              print(
-                  '🔔 New notification received via realtime: ${payload.newRecord}');
+              AppLogger.info('New notification received via realtime: ${payload.newRecord}');
               _handleNewNotification(payload.newRecord);
             },
           )
@@ -230,8 +231,7 @@ class EnhancedNotificationProvider extends ChangeNotifier {
               value: user.id,
             ),
             callback: (payload) {
-              print(
-                  '🔔 Notification updated via realtime: ${payload.newRecord}');
+              AppLogger.info('Notification updated via realtime: ${payload.newRecord}');
               _handleUpdatedNotification(payload.newRecord);
             },
           )
@@ -245,16 +245,15 @@ class EnhancedNotificationProvider extends ChangeNotifier {
               value: user.id,
             ),
             callback: (payload) {
-              print(
-                  '🔔 Notification deleted via realtime: ${payload.oldRecord}');
+              AppLogger.info('Notification deleted via realtime: ${payload.oldRecord}');
               _handleDeletedNotification(payload.oldRecord);
             },
           )
           .subscribe();
 
-      print('✅ Realtime subscription for notifications initialized');
+      AppLogger.info('Realtime subscription for notifications initialized');
     } catch (e) {
-      print('❌ Error initializing realtime subscription: $e');
+      AppLogger.error('Error initializing realtime subscription', error: e);
     }
   }
 
@@ -264,9 +263,9 @@ class EnhancedNotificationProvider extends ChangeNotifier {
       final notification = NotificationModel.fromJson(data);
       _notifications.insert(0, notification); // Add to beginning
       notifyListeners();
-      print('✅ New notification added to local state');
+      AppLogger.debug('New notification added to local state');
     } catch (e) {
-      print('❌ Error handling new notification: $e');
+      AppLogger.error('Error handling new notification', error: e);
     }
   }
 
@@ -280,10 +279,10 @@ class EnhancedNotificationProvider extends ChangeNotifier {
       if (index != -1) {
         _notifications[index] = updatedNotification;
         notifyListeners();
-        print('✅ Notification updated in local state');
+        AppLogger.debug('Notification updated in local state');
       }
     } catch (e) {
-      print('❌ Error handling updated notification: $e');
+      AppLogger.error('Error handling updated notification', error: e);
     }
   }
 
@@ -293,9 +292,9 @@ class EnhancedNotificationProvider extends ChangeNotifier {
       final deletedId = data['id'] as String;
       _notifications.removeWhere((n) => n.id == deletedId);
       notifyListeners();
-      print('✅ Notification removed from local state');
+      AppLogger.debug('Notification removed from local state');
     } catch (e) {
-      print('❌ Error handling deleted notification: $e');
+      AppLogger.error('Error handling deleted notification', error: e);
     }
   }
 
@@ -316,8 +315,7 @@ class EnhancedNotificationProvider extends ChangeNotifier {
               if (currentLevel != null &&
                   minLevel != null &&
                   currentLevel <= minLevel) {
-                print(
-                    '📉 Stock level alert: Product ${stockData['product_id']} is below minimum');
+                AppLogger.warning('Stock level alert: Product ${stockData['product_id']} is below minimum');
 
                 // Create notification in database (which will trigger realtime update)
                 await _createStockAlert(stockData);
@@ -326,9 +324,9 @@ class EnhancedNotificationProvider extends ChangeNotifier {
           )
           .subscribe();
 
-      print('✅ Stock changes subscription initialized');
+      AppLogger.info('Stock changes subscription initialized');
     } catch (e) {
-      print('❌ Error subscribing to stock changes: $e');
+      AppLogger.error('Error subscribing to stock changes', error: e);
     }
   }
 
@@ -351,9 +349,9 @@ class EnhancedNotificationProvider extends ChangeNotifier {
         },
       });
 
-      print('✅ Stock alert notification created');
+      AppLogger.info('Stock alert notification created');
     } catch (e) {
-      print('❌ Error creating stock alert: $e');
+      AppLogger.error('Error creating stock alert', error: e);
     }
   }
 

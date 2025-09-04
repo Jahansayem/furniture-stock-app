@@ -337,8 +337,9 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                                       .where((p) => p.id == stock.productId)
                                       .firstOrNull;
 
-                                  if (product == null)
+                                  if (product == null) {
                                     return const SizedBox.shrink();
+                                  }
 
                                   final isLowStock = stock.quantity <=
                                       product.lowStockThreshold;
@@ -404,7 +405,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                 ],
               ),
             ),

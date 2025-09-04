@@ -10,6 +10,7 @@ import '../../services/sync_service.dart';
 import '../../services/connectivity_service.dart';
 
 import '../../utils/app_theme.dart';
+import '../../utils/logger.dart';
 
 class ActivityItem {
   final String type;
@@ -80,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Load remaining data in background
       _loadRemainingDataInBackground();
     } catch (e) {
-      print('Error loading initial data: $e');
+      AppLogger.error('Error loading initial data', error: e);
       if (mounted) {
         setState(() {
           _isDataLoaded = true;
@@ -97,15 +98,10 @@ class _HomeScreenState extends State<HomeScreen> {
         Provider.of<NotificationProvider>(context, listen: false);
 
     // Load each data type with small delays between them
+    // Load remaining data concurrently - no need for artificial delays
     Future.microtask(() => stockProvider.fetchLocations());
-
-    await Future.delayed(const Duration(milliseconds: 200));
     Future.microtask(() => stockProvider.fetchMovements());
-
-    await Future.delayed(const Duration(milliseconds: 200));
     Future.microtask(() => salesProvider.fetchSales());
-
-    await Future.delayed(const Duration(milliseconds: 200));
     Future.microtask(() => notificationProvider.fetchNotifications());
   }
 
@@ -395,6 +391,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icons.analytics,
                           AppColors.info,
                           () => context.go('/reports'),
+                        ),
+                        _buildActionCard(
+                          context,
+                          'অনলাইন COD অর্ডার',
+                          Icons.local_shipping,
+                          Colors.orange,
+                          () => context.go('/sales/online-cod'),
                         ),
                       ],
                     ),
@@ -795,7 +798,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white.withOpacity(0.2),
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
             foregroundColor: Colors.white,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

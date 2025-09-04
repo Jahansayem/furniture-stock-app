@@ -4,6 +4,7 @@ import '../config/supabase_config.dart';
 import '../models/stock.dart';
 import '../services/onesignal_service.dart';
 import '../services/offline_storage_service.dart';
+import '../utils/logger.dart';
 import '../services/connectivity_service.dart';
 import '../services/sync_service.dart';
 
@@ -308,7 +309,7 @@ class StockProvider extends ChangeNotifier {
         );
       } catch (e) {
         // Don't fail the operation if notification fails
-        print('Failed to send stock movement notification: $e');
+        AppLogger.error('Failed to send stock movement notification', error: e);
       }
 
       await fetchStocks();
@@ -435,7 +436,7 @@ class StockProvider extends ChangeNotifier {
         );
       } catch (e) {
         // Don't fail the operation if notification fails
-        print('Failed to send production notification: $e');
+        AppLogger.error('Failed to send production notification', error: e);
       }
 
       await fetchStocks();

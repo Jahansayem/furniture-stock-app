@@ -17,8 +17,7 @@ class AppTheme {
         brightness: Brightness.light,
         primary: primaryBlue,
         secondary: accentBlue,
-        surface: Colors.white,
-        background: backgroundBlue,
+        surface: backgroundBlue,
       ),
 
       // App Bar Theme
@@ -148,14 +147,14 @@ class AppTheme {
 
       // Switch Theme
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryBlue;
           }
           return Colors.grey;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryBlue.withAlpha(128);
           }
           return Colors.grey.withAlpha(76);
@@ -164,19 +163,19 @@ class AppTheme {
 
       // Checkbox Theme
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryBlue;
           }
           return Colors.transparent;
         }),
-        checkColor: MaterialStateProperty.all(Colors.white),
+        checkColor: WidgetStateProperty.all(Colors.white),
       ),
 
       // Radio Theme
       radioTheme: RadioThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryBlue;
           }
           return Colors.grey;
@@ -260,8 +259,7 @@ class AppTheme {
         brightness: Brightness.dark,
         primary: lightBlue,
         secondary: accentBlue,
-        surface: const Color(0xFF1E1E1E),
-        background: const Color(0xFF121212),
+        surface: const Color(0xFF121212),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBlue,

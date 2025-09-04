@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 import 'config/supabase_config.dart';
+import 'config/environment.dart';
 import 'models/product.dart';
 import 'models/stock.dart';
 import 'providers/auth_provider.dart';
@@ -22,6 +23,7 @@ import 'screens/products/edit_product_screen.dart';
 import 'screens/stock/stock_overview_screen.dart';
 import 'screens/stock/stock_movement_screen.dart';
 import 'screens/sales/create_sale_screen.dart';
+import 'screens/sales/online_cod_order_screen.dart';
 import 'screens/reports/reports_screen.dart';
 import 'screens/reports/location_detail_screen.dart';
 import 'screens/profile/profile_screen.dart';
@@ -34,42 +36,57 @@ import 'services/onesignal_service.dart';
 import 'services/offline_storage_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/sync_service.dart';
+import 'utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize environment configuration first (AI-coding-resistant)
+  try {
+    await Environment.initialize();
+    AppLogger.info('Environment configuration loaded successfully');
+    
+    // Debug: Print configuration sources
+    final configInfo = Environment.getConfigurationInfo();
+    AppLogger.info('Configuration sources: $configInfo');
+  } catch (e) {
+    AppLogger.error('Error initializing environment', error: e);
+  }
+
+  // Initialize Supabase with environment-loaded credentials
   try {
     await Supabase.initialize(
       url: SupabaseConfig.supabaseUrl,
       anonKey: SupabaseConfig.supabaseAnonKey,
     );
-    print('✅ Supabase initialized successfully');
+    AppLogger.info('Supabase initialized successfully');
   } catch (e) {
-    print('❌ Error initializing Supabase: $e');
+    AppLogger.error('Error initializing Supabase', error: e);
+    AppLogger.error('Check your Supabase credentials in .env file');
   }
 
   // Initialize offline storage
   try {
     await OfflineStorageService.initialize();
-    print('✅ Offline storage initialized successfully');
+    AppLogger.info('Offline storage initialized successfully');
   } catch (e) {
-    print('❌ Error initializing offline storage: $e');
+    AppLogger.error('Error initializing offline storage', error: e);
   }
 
   // Initialize connectivity service
   try {
     await ConnectivityService().initialize();
-    print('✅ Connectivity service initialized successfully');
+    AppLogger.info('Connectivity service initialized successfully');
   } catch (e) {
-    print('❌ Error initializing connectivity service: $e');
+    AppLogger.error('Error initializing connectivity service', error: e);
   }
 
   // Initialize sync service
   try {
     await SyncService().initialize();
-    print('✅ Sync service initialized successfully');
+    AppLogger.info('Sync service initialized successfully');
   } catch (e) {
-    print('❌ Error initializing sync service: $e');
+    AppLogger.error('Error initializing sync service', error: e);
   }
 
   runApp(const FurnitureStockApp());
@@ -83,10 +100,10 @@ void _initializeOneSignalInBackground() {
   Future.delayed(const Duration(milliseconds: 500), () async {
     try {
       await OneSignalService.initialize();
-      print('✅ OneSignal initialized successfully in background');
+      AppLogger.info('OneSignal initialized successfully in background');
     } catch (e) {
-      print('❌ Error initializing OneSignal in background: $e');
-      print('⚠️ App will continue without push notifications');
+      AppLogger.error('Error initializing OneSignal in background', error: e);
+      AppLogger.warning('App will continue without push notifications');
     }
   });
 }
@@ -206,6 +223,10 @@ class FurnitureStockApp extends StatelessWidget {
               builder: (context, state) => const CreateSaleScreen(),
             ),
             GoRoute(
+              path: '/sales/online-cod',
+              builder: (context, state) => const OnlineCodOrderScreen(),
+            ),
+            GoRoute(
               path: '/reports',
               builder: (context, state) => const ReportsScreen(),
             ),
@@ -295,7 +316,7 @@ class _MainLayoutState extends State<MainLayout> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
         final currentRoute = GoRouterState.of(context).matchedLocation;

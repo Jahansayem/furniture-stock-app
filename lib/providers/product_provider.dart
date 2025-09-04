@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../services/offline_storage_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/sync_service.dart';
+import '../utils/logger.dart';
 
 class ProductProvider extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -189,7 +190,7 @@ class ProductProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      print('Attempting to delete product: $productId');
+      AppLogger.debug('Attempting to delete product: $productId');
 
       // First check if product exists
       final product = await _supabase
@@ -198,7 +199,7 @@ class ProductProvider extends ChangeNotifier {
           .eq('id', productId)
           .single();
 
-      print('Product found: ${product['product_name']}');
+      AppLogger.debug('Product found: ${product['product_name']}');
 
       // Check for foreign key constraints
       final stockEntries = await _supabase
@@ -206,7 +207,7 @@ class ProductProvider extends ChangeNotifier {
           .select('id')
           .eq('product_id', productId);
 
-      print('Stock entries for this product: ${stockEntries.length}');
+      AppLogger.debug('Stock entries for this product: ${stockEntries.length}');
 
       if (stockEntries.isNotEmpty) {
         _setError(
@@ -221,14 +222,14 @@ class ProductProvider extends ChangeNotifier {
           .delete()
           .eq('id', productId);
 
-      print('Product deleted successfully');
+      AppLogger.info('Product deleted successfully');
 
       // Refresh the products list from server to ensure consistency
       await fetchProducts();
 
       return true;
     } catch (e) {
-      print('Error deleting product: $e');
+      AppLogger.error('Error deleting product', error: e);
       _setError('Failed to delete product: ${e.toString()}');
       _setLoading(false);
       return false;

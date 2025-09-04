@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../utils/logger.dart';
 
 class ConnectivityService extends ChangeNotifier {
   static final ConnectivityService _instance = ConnectivityService._internal();
@@ -12,8 +13,8 @@ class ConnectivityService extends ChangeNotifier {
 
   bool _isOnline = true;
   bool _isInitialized = false;
-  List<VoidCallback> _onlineCallbacks = [];
-  List<VoidCallback> _offlineCallbacks = [];
+  final List<VoidCallback> _onlineCallbacks = [];
+  final List<VoidCallback> _offlineCallbacks = [];
 
   bool get isOnline => _isOnline;
   bool get isOffline => !_isOnline;
@@ -32,14 +33,14 @@ class ConnectivityService extends ChangeNotifier {
       _subscription = _connectivity.onConnectivityChanged.listen(
         (ConnectivityResult result) => _updateConnectionStatus(result),
         onError: (error) {
-          print('❌ Connectivity stream error: $error');
+          AppLogger.error('Connectivity stream error', error: error);
         },
       );
 
       _isInitialized = true;
-      print('✅ Connectivity service initialized');
+      AppLogger.info('Connectivity service initialized');
     } catch (e) {
-      print('❌ Error initializing connectivity service: $e');
+      AppLogger.error('Error initializing connectivity service', error: e);
       // Assume online if we can't check
       _isOnline = true;
       _isInitialized = true;
@@ -54,7 +55,7 @@ class ConnectivityService extends ChangeNotifier {
         result == ConnectivityResult.wifi ||
         result == ConnectivityResult.ethernet;
 
-    print('🌐 Connectivity status: ${_isOnline ? "Online" : "Offline"}');
+    AppLogger.info('Connectivity status: ${_isOnline ? "Online" : "Offline"}');
 
     // Notify listeners if status changed
     if (wasOnline != _isOnline) {
@@ -66,7 +67,7 @@ class ConnectivityService extends ChangeNotifier {
           try {
             callback();
           } catch (e) {
-            print('❌ Error in online callback: $e');
+            AppLogger.error('Error in online callback', error: e);
           }
         }
       } else {
@@ -74,7 +75,7 @@ class ConnectivityService extends ChangeNotifier {
           try {
             callback();
           } catch (e) {
-            print('❌ Error in offline callback: $e');
+            AppLogger.error('Error in offline callback', error: e);
           }
         }
       }
@@ -114,7 +115,7 @@ class ConnectivityService extends ChangeNotifier {
       _updateConnectionStatus(result);
       return _isOnline;
     } catch (e) {
-      print('❌ Error checking connectivity: $e');
+      AppLogger.error('Error checking connectivity', error: e);
       return _isOnline; // Return current status if check fails
     }
   }

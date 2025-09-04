@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/logger.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -340,7 +341,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _selectedRole,
     );
 
-    print('🟨 Success $success');
+    AppLogger.debug('Registration success: $success');
 
     if (success && mounted) {
       context.go('/home');

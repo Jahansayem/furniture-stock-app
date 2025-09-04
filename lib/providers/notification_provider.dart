@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notification.dart';
+import '../utils/logger.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -180,7 +181,7 @@ class NotificationProvider extends ChangeNotifier {
       }
     } catch (e) {
       // Silently fail for now
-      print('Error checking low stock: $e');
+      AppLogger.error('Error checking low stock', error: e);
     }
   }
 }

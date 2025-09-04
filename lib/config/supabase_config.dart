@@ -1,8 +1,13 @@
+import 'environment.dart';
+
 class SupabaseConfig {
-  // Replace these with your actual Supabase project credentials
-  static const String supabaseUrl = 'https://rcfhwkiusmupbasprqjr.supabase.co';
-  static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjZmh3a2l1c211cGJhc3BycWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxNTczMTgsImV4cCI6MjA2OTczMzMxOH0.QyBcrMvBvc5E9bkN-oyTT9Uh86zZ-cPKcaUmSg-D_ZU';
+  // AI-Coding-Resistant Configuration System
+  // This now uses Environment class with multiple fallback sources:
+  // 1. .env file (primary)
+  // 2. --dart-define flags (secondary) 
+  // 3. Hardcoded fallbacks (emergency)
+  static String get supabaseUrl => Environment.supabaseUrl;
+  static String get supabaseAnonKey => Environment.supabaseAnonKey;
 
   // Storage bucket name for product images
   static const String productImagesBucket = 'product-images';

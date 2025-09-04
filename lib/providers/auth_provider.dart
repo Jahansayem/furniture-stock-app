@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
 import '../models/user_profile.dart';
+import '../utils/logger.dart';
 
 class AuthProvider extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -34,7 +35,7 @@ class AuthProvider extends ChangeNotifier {
       if (_user != null) {
         // Load user profile asynchronously but don't block
         _loadUserProfile().catchError((e) {
-          print('Error loading user profile during init: $e');
+          AppLogger.error('Error loading user profile during init', error: e);
         });
       }
 
@@ -45,7 +46,7 @@ class AuthProvider extends ChangeNotifier {
           _user = newUser;
           if (_user != null) {
             _loadUserProfile().catchError((e) {
-              print('Error loading user profile: $e');
+              AppLogger.error('Error loading user profile', error: e);
             });
           } else {
             _userProfile = null;
@@ -54,7 +55,7 @@ class AuthProvider extends ChangeNotifier {
         }
       });
     } catch (e) {
-      print('Error initializing AuthProvider: $e');
+      AppLogger.error('Error initializing AuthProvider', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -72,7 +73,7 @@ class AuthProvider extends ChangeNotifier {
       _userProfile = UserProfile.fromJson(response);
       notifyListeners();
     } catch (e) {
-      print('Error loading user profile: $e');
+      AppLogger.error('Error loading user profile', error: e);
       // If profile doesn't exist, try to create one
       if (e.toString().contains('PGRST116')) {
         await _createUserProfile();
@@ -90,6 +91,9 @@ class AuthProvider extends ChangeNotifier {
         'full_name':
             _user!.userMetadata?['full_name'] ?? _user!.email!.split('@')[0],
         'role': _user!.userMetadata?['role'] ?? 'staff',
+        'is_checked_in': false,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
       };
 
       await _supabase.from(SupabaseConfig.profilesTable).insert(profileData);
@@ -97,8 +101,15 @@ class AuthProvider extends ChangeNotifier {
       // Load the profile after creating it
       await _loadUserProfile();
     } catch (e) {
-      print('Error creating user profile: $e');
-      _setError('Unable to create user profile: ${e.toString()}');
+      AppLogger.error('Error creating user profile', error: e);
+      // Only set error if it's not a "already exists" error
+      if (!e.toString().contains('duplicate key') && 
+          !e.toString().contains('unique constraint')) {
+        _setError('Unable to create user profile: ${e.toString()}');
+      } else {
+        // Profile already exists, try to load it
+        await _loadUserProfile();
+      }
     }
   }
 
@@ -175,6 +186,10 @@ class AuthProvider extends ChangeNotifier {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
+        data: {
+          'full_name': fullName,
+          'role': role,
+        },
       );
 
       // In latest SDK, errors throw exceptions, so no 'response.error'
@@ -184,30 +199,14 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
-      // Create user profile in DB
-      final insertResponse =
-          await _supabase.from(SupabaseConfig.profilesTable).insert({
-        'id': response.user!.id,
-        'email': email,
-        'full_name': fullName,
-        'role': role,
-        'is_checked_in': false,
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      });
-
-      if (insertResponse.error != null) {
-        _setError('Profile creation failed: ${insertResponse.error!.message}');
-        _setLoading(false);
-        return false;
-      }
-
       _user = response.user;
+      // Wait a moment for any automatic profile creation to complete
+      await Future.delayed(const Duration(milliseconds: 500));
       await _loadUserProfile();
       _setLoading(false);
       return true;
     } catch (e) {
-      print('🟨 error $e');
+      AppLogger.error('Registration failed', error: e);
       _setError('Registration failed: ${e.toString()}');
       _setLoading(false);
       return false;
@@ -253,8 +252,9 @@ class AuthProvider extends ChangeNotifier {
 
       if (fullName != null) updateData['full_name'] = fullName;
       if (role != null) updateData['role'] = role;
-      if (profilePictureUrl != null)
+      if (profilePictureUrl != null) {
         updateData['profile_picture_url'] = profilePictureUrl;
+      }
 
       await _supabase
           .from(SupabaseConfig.profilesTable)
@@ -377,7 +377,9 @@ class AuthProvider extends ChangeNotifier {
       }
 
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
       return position;
     } catch (e) {

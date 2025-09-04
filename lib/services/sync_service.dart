@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
+import '../utils/logger.dart';
 import 'offline_storage_service.dart';
 import 'connectivity_service.dart';
 
@@ -26,7 +27,7 @@ class SyncService extends ChangeNotifier {
   Future<void> initialize() async {
     // Add callback to sync when coming online
     _connectivity.addOnlineCallback(_performAutoSync);
-    print('✅ Sync service initialized');
+    AppLogger.info('Sync service initialized');
   }
 
   /// Perform automatic sync when device comes online
@@ -39,7 +40,7 @@ class SyncService extends ChangeNotifier {
   /// Sync all data with the server
   Future<bool> syncAllData() async {
     if (_isSyncing || !_connectivity.isOnline) {
-      print('⚠️ Sync already in progress or device is offline');
+      AppLogger.warning('Sync already in progress or device is offline');
       return false;
     }
 
@@ -49,7 +50,7 @@ class SyncService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('🔄 Starting data synchronization...');
+      AppLogger.info('Starting data synchronization...');
 
       // 1. Sync pending actions first
       await _syncPendingActions();
@@ -62,14 +63,14 @@ class SyncService extends ChangeNotifier {
 
       _syncStatus = 'Completed';
       _lastSyncTime = DateTime.now();
-      print('✅ Data synchronization completed successfully');
+      AppLogger.info('Data synchronization completed successfully');
 
       notifyListeners();
       return true;
     } catch (e) {
       _syncStatus = 'Failed';
       _syncErrors.add('Sync failed: $e');
-      print('❌ Data synchronization failed: $e');
+      AppLogger.error('Data synchronization failed', error: e);
 
       notifyListeners();
       return false;
@@ -83,19 +84,19 @@ class SyncService extends ChangeNotifier {
     final pendingActions = OfflineStorageService.getPendingActions();
 
     if (pendingActions.isEmpty) {
-      print('📋 No pending actions to sync');
+      AppLogger.debug('No pending actions to sync');
       return;
     }
 
-    print('📋 Syncing ${pendingActions.length} pending actions...');
+    AppLogger.info('Syncing ${pendingActions.length} pending actions...');
 
     for (final action in pendingActions) {
       try {
         await _processPendingAction(action);
         await OfflineStorageService.removePendingAction(action['id']);
-        print('✅ Synced action: ${action['type']}');
+        AppLogger.debug('Synced action: ${action['type']}');
       } catch (e) {
-        print('❌ Failed to sync action ${action['id']}: $e');
+        AppLogger.error('Failed to sync action ${action['id']}', error: e);
         _syncErrors.add('Failed to sync ${action['type']}: $e');
         // Continue with other actions even if one fails
       }
@@ -124,6 +125,11 @@ class SyncService extends ChangeNotifier {
             .eq('id', data['id']);
         break;
       case 'create_sale':
+        // Validate unit_price before insertion to prevent constraint violation
+        final unitPrice = data['unit_price'];
+        if (unitPrice == null || (unitPrice is num && unitPrice <= 0)) {
+          throw Exception('Invalid unit_price: $unitPrice. Unit price must be greater than 0.');
+        }
         await _supabase.from(SupabaseConfig.salesTable).insert(data);
         break;
       case 'update_sale':
@@ -148,13 +154,13 @@ class SyncService extends ChangeNotifier {
             .eq('id', data['id']);
         break;
       default:
-        print('⚠️ Unknown action type: $type');
+        AppLogger.warning('Unknown action type: $type');
     }
   }
 
   /// Download latest data from server
   Future<void> _downloadServerData() async {
-    print('⬇️ Downloading latest data from server...');
+    AppLogger.info('Downloading latest data from server...');
 
     try {
       // Download products
@@ -198,19 +204,19 @@ class SyncService extends ChangeNotifier {
         await OfflineStorageService.storeUserProfile(profileResponse);
       }
 
-      print('✅ Server data downloaded successfully');
+      AppLogger.info('Server data downloaded successfully');
     } catch (e) {
-      print('❌ Error downloading server data: $e');
+      AppLogger.error('Error downloading server data', error: e);
       throw e;
     }
   }
 
   /// Upload local changes to server
   Future<void> _uploadLocalChanges() async {
-    print('⬆️ Uploading local changes to server...');
+    AppLogger.info('Uploading local changes to server...');
     // This would handle any local changes that need to be uploaded
     // For now, we mainly rely on pending actions for this
-    print('✅ Local changes uploaded successfully');
+    AppLogger.info('Local changes uploaded successfully');
   }
 
   /// Force sync now (called by backup button)
@@ -253,7 +259,7 @@ class SyncService extends ChangeNotifier {
       'type': type,
       'data': data,
     });
-    print('📝 Added pending action: $type');
+    AppLogger.debug('Added pending action: $type');
   }
 
   @override

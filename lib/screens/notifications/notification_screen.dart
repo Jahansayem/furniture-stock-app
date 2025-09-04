@@ -160,7 +160,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: _getNotificationColor(notification.type)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(

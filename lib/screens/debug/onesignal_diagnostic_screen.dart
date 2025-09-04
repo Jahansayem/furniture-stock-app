@@ -204,8 +204,8 @@ class _OneSignalDiagnosticScreenState extends State<OneSignalDiagnosticScreen> {
 
     return Card(
       color: overallHealthy
-          ? Colors.green.withOpacity(0.1)
-          : Colors.red.withOpacity(0.1),
+          ? Colors.green.withValues(alpha: 0.1)
+          : Colors.red.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -373,7 +373,7 @@ class _OneSignalDiagnosticScreenState extends State<OneSignalDiagnosticScreen> {
                     style: const TextStyle(fontSize: 12),
                   ),
                 );
-              }).toList(),
+              }),
               if ((result['userDetails'] as List).length > 5) ...[
                 Text(
                   '... and ${(result['userDetails'] as List).length - 5} more',
@@ -394,7 +394,7 @@ class _OneSignalDiagnosticScreenState extends State<OneSignalDiagnosticScreen> {
 
     return Card(
       color:
-          success ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+          success ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

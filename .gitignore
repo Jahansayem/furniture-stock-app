@@ -1,3 +1,10 @@
+# ============================================
+# PROTECTED FILES - DO NOT DELETE OR MODIFY
+# ============================================
+# .env - Contains Supabase credentials, protected from AI coding
+# CLAUDE.md - Project documentation and configuration
+# These files should NEVER be added to .gitignore or deleted
+
 # Miscellaneous
 *.class
 *.log

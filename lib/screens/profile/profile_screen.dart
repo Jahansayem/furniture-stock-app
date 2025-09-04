@@ -86,7 +86,7 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -103,7 +103,7 @@ class ProfileScreen extends StatelessWidget {
                             child: CircleAvatar(
                               radius: 50,
                               backgroundColor:
-                                  AppTheme.primaryBlue.withOpacity(0.1),
+                                  AppTheme.primaryBlue.withValues(alpha: 0.1),
                               backgroundImage: user.profilePictureUrl != null
                                   ? CachedNetworkImageProvider(
                                       user.profilePictureUrl!)
@@ -163,7 +163,7 @@ class ProfileScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withOpacity(0.1),
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -190,7 +190,7 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -296,7 +296,7 @@ class ProfileScreen extends StatelessWidget {
                   'Edit Profile',
                   Icons.edit,
                   () {
-                    // TODO: Navigate to edit profile
+                    _showEditProfileDialog(context);
                   },
                 ),
 
@@ -305,7 +305,7 @@ class ProfileScreen extends StatelessWidget {
                   'Change Password',
                   Icons.lock,
                   () {
-                    // TODO: Navigate to change password
+                    _showChangePasswordDialog(context);
                   },
                 ),
 
@@ -329,7 +329,7 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -366,7 +366,7 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -376,7 +376,7 @@ class ProfileScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primaryBlue.withOpacity(0.1),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: AppTheme.primaryBlue),
@@ -414,6 +414,128 @@ class ProfileScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final nameController = TextEditingController(text: authProvider.userProfile?.fullName ?? '');
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Full Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await authProvider.updateProfile(
+                fullName: nameController.text.trim(),
+              );
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile updated successfully')),
+                  );
+                }
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: currentPasswordController,
+              decoration: const InputDecoration(
+                labelText: 'Current Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: newPasswordController,
+              decoration: const InputDecoration(
+                labelText: 'New Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: confirmPasswordController,
+              decoration: const InputDecoration(
+                labelText: 'Confirm New Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (newPasswordController.text != confirmPasswordController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Passwords do not match')),
+                );
+                return;
+              }
+              
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final success = await authProvider.changePassword(
+                currentPasswordController.text,
+                newPasswordController.text,
+              );
+              
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Password changed successfully')),
+                  );
+                }
+              }
+            },
+            child: const Text('Change'),
           ),
         ],
       ),

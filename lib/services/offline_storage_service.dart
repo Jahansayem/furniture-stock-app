@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import '../utils/logger.dart';
 
 class OfflineStorageService {
   static const String _productsBox = 'products_offline';
@@ -36,10 +37,10 @@ class OfflineStorageService {
       _userProfileHiveBox = await Hive.openBox(_userProfileBox);
 
       _isInitialized = true;
-      print('✅ Offline storage initialized successfully');
+      AppLogger.info('Offline storage initialized successfully');
     } catch (e) {
-      print('❌ Error initializing offline storage: $e');
-      throw e;
+      AppLogger.error('Error initializing offline storage', error: e);
+      rethrow;
     }
   }
 

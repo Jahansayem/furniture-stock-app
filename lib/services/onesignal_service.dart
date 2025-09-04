@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
@@ -9,6 +10,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
+import '../constants/onesignal_config.dart';
+import '../utils/logger.dart';
 
 class OneSignalService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
@@ -19,21 +22,33 @@ class OneSignalService {
 
   // Initialize OneSignal
   static Future<void> initialize() async {
-    print('🔔 Initializing OneSignal...');
+    AppLogger.info('Initializing OneSignal...');
 
     try {
+      // Skip OneSignal initialization on web due to plugin compatibility issues
+      if (kIsWeb) {
+        AppLogger.warning('OneSignal skipped on web platform - using fallback notifications');
+        await _initializeLocalNotifications();
+        _isInitialized = true;
+        return;
+      }
+
       // Remove this method to stop OneSignal Debugging
       OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
 
-      // OneSignal Initialization
-      OneSignal.initialize("ae49f2db-a82d-4149-81fa-7308b0338cd2");
+      // OneSignal Initialization (App ID from --dart-define)
+      if (OneSignalConfig.appId.isEmpty) {
+        throw Exception(
+            'ONESIGNAL_APP_ID is not set. Provide via --dart-define.');
+      }
+      OneSignal.initialize(OneSignalConfig.appId);
 
       // IMPORTANT: Provide user consent immediately for proper functionality
       // In a production app, you should ask the user for consent first
       OneSignal.consentGiven(true);
 
       // Request notification permission - especially important for Android 13+
-      print('📱 Requesting notification permissions...');
+      AppLogger.info('Requesting notification permissions...');
       await OneSignal.Notifications.requestPermission(true);
 
       // For Android 13+, also handle runtime permission
@@ -48,16 +63,16 @@ class OneSignalService {
       _setupNotificationHandlers();
 
       // Wait a bit for OneSignal to fully initialize before getting player ID
-      print('⏳ Waiting for OneSignal to fully initialize...');
+      AppLogger.debug('Waiting for OneSignal to fully initialize...');
       await Future.delayed(const Duration(seconds: 2));
 
       _isInitialized = true;
-      print('✅ OneSignal initialized successfully');
+      AppLogger.info('OneSignal initialized successfully');
 
       // Get player ID and save to database (with retry logic)
       await _getPlayerIdAndSaveWithRetry();
     } catch (e) {
-      print('❌ Error initializing OneSignal: $e');
+      AppLogger.error('Error initializing OneSignal', error: e);
       _isInitialized = false;
       // Don't throw - let the app continue without OneSignal
     }
@@ -100,9 +115,9 @@ class OneSignalService {
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
 
-      print('✅ Local notifications initialized');
+      AppLogger.info('Local notifications initialized');
     } catch (e) {
-      print('❌ Error initializing local notifications: $e');
+      AppLogger.error('Error initializing local notifications', error: e);
     }
   }
 
@@ -110,14 +125,13 @@ class OneSignalService {
   static void _setupNotificationHandlers() {
     // Handle notification opened
     OneSignal.Notifications.addClickListener((event) {
-      print(
-          '🔔 OneSignal notification clicked: ${event.notification.notificationId}');
+      AppLogger.info('OneSignal notification clicked: ${event.notification.notificationId}');
       _handleNotificationTap(event.notification.additionalData);
     });
 
     // Handle notification received while app is in foreground
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-      print('🔔 OneSignal notification received in foreground');
+      AppLogger.debug('OneSignal notification received in foreground');
       // Display the notification as local notification
       _showLocalNotification(
         event.notification.title ?? 'FurniTruck',
@@ -129,13 +143,13 @@ class OneSignalService {
 
   // Handle notification tap
   static void _onNotificationTapped(NotificationResponse response) {
-    print('🔔 Local notification tapped: ${response.payload}');
+    AppLogger.debug('Local notification tapped: ${response.payload}');
     if (response.payload != null) {
       try {
         final data = json.decode(response.payload!);
         _handleNotificationTap(data);
       } catch (e) {
-        print('❌ Error parsing notification payload: $e');
+        AppLogger.error('Error parsing notification payload', error: e);
       }
     }
   }
@@ -144,7 +158,7 @@ class OneSignalService {
   static void _handleNotificationTap(Map<String, dynamic>? data) {
     if (data == null) return;
 
-    print('🔔 Handling notification tap with data: $data');
+    AppLogger.debug('Handling notification tap with data: $data');
 
     // Add your navigation logic here based on notification data
     // For example:
@@ -162,31 +176,30 @@ class OneSignalService {
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        print('🔄 Attempting to get Player ID (attempt $attempt/$maxRetries)');
+        AppLogger.debug('Attempting to get Player ID (attempt $attempt/$maxRetries)');
 
         final user = _supabase.auth.currentUser;
         if (user == null) {
-          print('⚠️ No authenticated user - cannot save player ID');
+          AppLogger.warning('No authenticated user - cannot save player ID');
           return;
         }
 
         // Get player ID
         final playerId = await OneSignal.User.getOnesignalId();
         if (playerId == null || playerId.isEmpty) {
-          print('⚠️ Player ID is null or empty on attempt $attempt');
+          AppLogger.warning('Player ID is null or empty on attempt $attempt');
           if (attempt < maxRetries) {
-            print('⏳ Waiting ${retryDelay.inSeconds} seconds before retry...');
+            AppLogger.debug('Waiting ${retryDelay.inSeconds} seconds before retry...');
             await Future.delayed(retryDelay);
             continue;
           } else {
-            print(
-                '❌ Failed to get OneSignal player ID after $maxRetries attempts');
+            AppLogger.error('Failed to get OneSignal player ID after $maxRetries attempts');
             return;
           }
         }
 
         _playerId = playerId;
-        print('📱 OneSignal Player ID retrieved: $playerId');
+        AppLogger.info('OneSignal Player ID retrieved: $playerId');
 
         // Save to database
         await _supabase.from(SupabaseConfig.profilesTable).upsert({
@@ -195,16 +208,15 @@ class OneSignalService {
           'updated_at': DateTime.now().toIso8601String(),
         });
 
-        print('✅ OneSignal Player ID saved to database successfully');
+        AppLogger.info('OneSignal Player ID saved to database successfully');
         return; // Success - exit the retry loop
       } catch (e) {
-        print(
-            '❌ Error getting/saving OneSignal Player ID (attempt $attempt): $e');
+        AppLogger.error('Error getting/saving OneSignal Player ID (attempt $attempt)', error: e);
         if (attempt < maxRetries) {
-          print('⏳ Waiting ${retryDelay.inSeconds} seconds before retry...');
+          AppLogger.debug('Waiting ${retryDelay.inSeconds} seconds before retry...');
           await Future.delayed(retryDelay);
         } else {
-          print('❌ Failed to get/save Player ID after $maxRetries attempts');
+          AppLogger.error('Failed to get/save Player ID after $maxRetries attempts');
         }
       }
     }
@@ -249,7 +261,7 @@ class OneSignalService {
         payload: data != null ? json.encode(data) : null,
       );
     } catch (e) {
-      print('❌ Error showing local notification: $e');
+      AppLogger.error('Error showing local notification', error: e);
     }
   }
 
@@ -261,14 +273,14 @@ class OneSignalService {
   }) async {
     try {
       if (!_isInitialized) {
-        print('⚠️ OneSignal not initialized - notification not sent');
+        AppLogger.warning('OneSignal not initialized - notification not sent');
         return false;
       }
 
-      print('📤 Sending notification to all users via OneSignal');
-      print('Title: $title');
-      print('Message: $message');
-      print('Data: $data');
+      AppLogger.info('Sending notification to all users via OneSignal');
+      AppLogger.debug('Notification title: $title');
+      AppLogger.debug('Notification message: $message');
+      AppLogger.debug('Notification data: $data');
 
       // Send via Supabase Edge Function
       final response = await _supabase.functions.invoke(
@@ -281,14 +293,14 @@ class OneSignalService {
       );
 
       if (response.status == 200) {
-        print('✅ Notification sent successfully via OneSignal');
+        AppLogger.info('Notification sent successfully via OneSignal');
         return true;
       } else {
-        print('❌ Failed to send notification: ${response.status}');
+        AppLogger.error('Failed to send notification: ${response.status}');
         return false;
       }
     } catch (e) {
-      print('❌ Error sending notification to all: $e');
+      AppLogger.error('Error sending notification to all', error: e);
       return false;
     }
   }
@@ -302,7 +314,7 @@ class OneSignalService {
   }) async {
     try {
       if (!_isInitialized) {
-        print('⚠️ OneSignal not initialized - notification not sent');
+        AppLogger.warning('OneSignal not initialized - notification not sent');
         return false;
       }
 
@@ -315,14 +327,14 @@ class OneSignalService {
 
       final playerId = userResponse['onesignal_player_id'] as String?;
       if (playerId == null) {
-        print('⚠️ No OneSignal player ID found for user: $userId');
+        AppLogger.warning('No OneSignal player ID found for user: $userId');
         return false;
       }
 
-      print('📤 Sending notification to user: $userId');
-      print('Player ID: $playerId');
-      print('Title: $title');
-      print('Message: $message');
+      AppLogger.info('Sending notification to user: $userId');
+      AppLogger.debug('Player ID: $playerId');
+      AppLogger.debug('Notification title: $title');
+      AppLogger.debug('Notification message: $message');
 
       // Send via Supabase Edge Function
       final response = await _supabase.functions.invoke(
@@ -336,14 +348,14 @@ class OneSignalService {
       );
 
       if (response.status == 200) {
-        print('✅ Notification sent successfully to user');
+        AppLogger.info('Notification sent successfully to user');
         return true;
       } else {
-        print('❌ Failed to send notification to user: ${response.status}');
+        AppLogger.error('Failed to send notification to user: ${response.status}');
         return false;
       }
     } catch (e) {
-      print('❌ Error sending notification to user: $e');
+      AppLogger.error('Error sending notification to user', error: e);
       return false;
     }
   }
@@ -356,7 +368,7 @@ class OneSignalService {
 
   // Manually refresh player ID (useful for debugging)
   static Future<String?> refreshPlayerId() async {
-    print('🔄 Manually refreshing OneSignal Player ID...');
+    AppLogger.info('Manually refreshing OneSignal Player ID...');
     await _getPlayerIdAndSaveWithRetry();
     return _playerId;
   }
@@ -365,9 +377,9 @@ class OneSignalService {
   static Future<void> setUserTags(Map<String, String> tags) async {
     try {
       await OneSignal.User.addTags(tags);
-      print('✅ OneSignal user tags updated: $tags');
+      AppLogger.info('OneSignal user tags updated: $tags');
     } catch (e) {
-      print('❌ Error updating OneSignal user tags: $e');
+      AppLogger.error('Error updating OneSignal user tags', error: e);
     }
   }
 
@@ -375,9 +387,9 @@ class OneSignalService {
   static Future<void> removeUserTags(List<String> tags) async {
     try {
       await OneSignal.User.removeTags(tags);
-      print('✅ OneSignal user tags removed: $tags');
+      AppLogger.info('OneSignal user tags removed: $tags');
     } catch (e) {
-      print('❌ Error removing OneSignal user tags: $e');
+      AppLogger.error('Error removing OneSignal user tags', error: e);
     }
   }
 
@@ -387,22 +399,22 @@ class OneSignalService {
       final status = await Permission.notification.status;
 
       if (status.isDenied) {
-        print('📱 Requesting Android notification permission...');
+        AppLogger.info('Requesting Android notification permission...');
         final result = await Permission.notification.request();
 
         if (result.isGranted) {
-          print('✅ Android notification permission granted');
+          AppLogger.info('Android notification permission granted');
         } else if (result.isDenied) {
-          print('❌ Android notification permission denied');
+          AppLogger.warning('Android notification permission denied');
         } else if (result.isPermanentlyDenied) {
-          print('❌ Android notification permission permanently denied');
+          AppLogger.warning('Android notification permission permanently denied');
           // You might want to show a dialog here directing users to settings
         }
       } else if (status.isGranted) {
-        print('✅ Android notification permission already granted');
+        AppLogger.info('Android notification permission already granted');
       }
     } catch (e) {
-      print('❌ Error requesting Android notification permission: $e');
+      AppLogger.error('Error requesting Android notification permission', error: e);
     }
   }
 
@@ -410,10 +422,10 @@ class OneSignalService {
   static Future<String?> getDeviceToken() async {
     try {
       final deviceState = await OneSignal.User.getOnesignalId();
-      print('📱 Device OneSignal ID: $deviceState');
+      AppLogger.info('Device OneSignal ID: $deviceState');
       return deviceState;
     } catch (e) {
-      print('❌ Error getting device token: $e');
+      AppLogger.error('Error getting device token', error: e);
       return null;
     }
   }
@@ -429,9 +441,9 @@ class OneSignalService {
           'timestamp': DateTime.now().toIso8601String(),
         },
       );
-      print('✅ Test notification sent');
+      AppLogger.info('Test notification sent');
     } catch (e) {
-      print('❌ Error sending test notification: $e');
+      AppLogger.error('Error sending test notification', error: e);
     }
   }
 }
@@ -461,11 +473,11 @@ Future<bool> sendOneSignalNotificationToAllUsers({
   );
 
   if (response.statusCode == 200) {
-    print('Notification sent successfully!');
+    AppLogger.info('Notification sent successfully!');
     return true;
   } else {
-    print('Failed to send notification. Status: ${response.statusCode}');
-    print('Response: ${response.body}');
+    AppLogger.error('Failed to send notification. Status: ${response.statusCode}');
+    AppLogger.debug('Response: ${response.body}');
     return false;
   }
 }
