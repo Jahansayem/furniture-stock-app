@@ -40,10 +40,12 @@ class SteadFastConfig {
   static const int phoneNumberLength = 11;
   static const int maxBulkOrders = 500;
 
-  // Status Constants
+  // Status Constants - Exact Steadfast API values
   static const String statusPending = 'pending';
-  static const String statusInTransit = 'in_transit';
   static const String statusDelivered = 'delivered';
-  static const String statusReturned = 'returned';
+  static const String statusPartialDelivered = 'partial_delivered';
   static const String statusCancelled = 'cancelled';
+  static const String statusReturned = 'returned';
+  static const String statusHold = 'hold';
+  static const String statusInReview = 'in_review';
 }

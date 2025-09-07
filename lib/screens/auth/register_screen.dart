@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -57,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withAlpha(51),
+                      color: AppTheme.primaryOrange.withAlpha(51),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -66,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: const Icon(
                   Icons.person_add,
                   size: 50,
-                  color: AppTheme.primaryBlue,
+                  color: AppTheme.primaryOrange,
                 ),
               ),
 
@@ -75,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Create Account',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppTheme.darkBlue,
+                      color: AppTheme.darkOrange,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Join the team',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.primaryBlue,
+                      color: AppTheme.primaryOrange,
                     ),
               ),
 
@@ -97,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryBlue.withAlpha(25),
+                      color: AppTheme.primaryOrange.withAlpha(25),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),

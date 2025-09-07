@@ -14,6 +14,7 @@ import 'providers/stock_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/enhanced_notification_provider.dart';
 import 'providers/sales_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -24,6 +25,7 @@ import 'screens/stock/stock_overview_screen.dart';
 import 'screens/stock/stock_movement_screen.dart';
 import 'screens/sales/create_sale_screen.dart';
 import 'screens/sales/online_cod_order_screen.dart';
+import 'screens/orders/order_management_screen.dart';
 import 'screens/reports/reports_screen.dart';
 import 'screens/reports/location_detail_screen.dart';
 import 'screens/profile/profile_screen.dart';
@@ -121,11 +123,17 @@ class FurnitureStockApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => EnhancedNotificationProvider()),
         ChangeNotifierProvider(create: (_) => SalesProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityService()),
         ChangeNotifierProvider(create: (_) => SyncService()),
       ],
-      child: Consumer2<AuthProvider, EnhancedNotificationProvider>(
-        builder: (context, authProvider, notificationProvider, _) {
+      child: Consumer3<AuthProvider, EnhancedNotificationProvider, ThemeProvider>(
+        builder: (context, authProvider, notificationProvider, themeProvider, _) {
+          // Initialize theme provider on first build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            themeProvider.initialize();
+          });
+          
           // Initialize realtime subscriptions when user is authenticated
           if (authProvider.isAuthenticated) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -136,7 +144,7 @@ class FurnitureStockApp extends StatelessWidget {
 
           return MaterialApp.router(
             title: 'FurniTrack',
-            theme: AppTheme.lightTheme,
+            theme: themeProvider.themeData,
             routerConfig: _createRouter(authProvider),
             debugShowCheckedModeBanner: false,
           );
@@ -227,6 +235,10 @@ class FurnitureStockApp extends StatelessWidget {
               builder: (context, state) => const OnlineCodOrderScreen(),
             ),
             GoRoute(
+              path: '/orders',
+              builder: (context, state) => const OrderManagementScreen(),
+            ),
+            GoRoute(
               path: '/reports',
               builder: (context, state) => const ReportsScreen(),
             ),
@@ -289,14 +301,14 @@ class _MainLayoutState extends State<MainLayout> {
       route: '/stock',
     ),
     NavigationItem(
+      icon: Icons.list_alt,
+      label: 'Orders',
+      route: '/orders',
+    ),
+    NavigationItem(
       icon: Icons.analytics,
       label: 'Reports',
       route: '/reports',
-    ),
-    NavigationItem(
-      icon: Icons.person,
-      label: 'Profile',
-      route: '/profile',
     ),
   ];
 

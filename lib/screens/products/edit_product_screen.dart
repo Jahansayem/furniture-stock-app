@@ -57,7 +57,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: const Text('Edit Product'),
         leading: IconButton(
@@ -97,12 +97,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryBlue.withAlpha(25),
+                        color: AppTheme.primaryOrange.withAlpha(25),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.edit,
-                        color: AppTheme.primaryBlue,
+                        color: AppTheme.primaryOrange,
                         size: 24,
                       ),
                     ),
@@ -117,7 +117,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(
-                                  color: AppTheme.darkBlue,
+                                  color: AppTheme.darkOrange,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),

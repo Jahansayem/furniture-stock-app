@@ -39,7 +39,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: Text(widget.location.locationName),
         backgroundColor: _getLocationColor(widget.location.locationType),
@@ -225,7 +225,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withAlpha(25),
+              color: AppTheme.primaryOrange.withAlpha(25),
               borderRadius: BorderRadius.circular(8),
             ),
             child: product.imageUrl != null && product.imageUrl!.isNotEmpty
@@ -237,7 +237,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
                           Icons.chair,
-                          color: AppTheme.primaryBlue,
+                          color: AppTheme.primaryOrange,
                           size: 32,
                         );
                       },
@@ -245,7 +245,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                   )
                 : Icon(
                     Icons.chair,
-                    color: AppTheme.primaryBlue,
+                    color: AppTheme.primaryOrange,
                     size: 32,
                   ),
           ),
@@ -272,7 +272,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                   Text(
                     '\$${product.price.toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.primaryBlue,
+                          color: AppTheme.primaryOrange,
                           fontWeight: FontWeight.w500,
                         ),
                   ),

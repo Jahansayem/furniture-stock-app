@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                    color: AppTheme.primaryBlue.withAlpha(51),
+                    color: AppTheme.primaryOrange.withAlpha(51),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: const Icon(
                 Icons.inventory_2,
                 size: 60,
-                color: AppTheme.primaryBlue,
+                color: AppTheme.primaryOrange,
               ),
             ),
             
@@ -61,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Text(
               'Furniture Stock',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppTheme.darkBlue,
+                color: AppTheme.darkOrange,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Text(
               'Management System',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.primaryBlue,
+                color: AppTheme.primaryOrange,
               ),
             ),
             
@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryBlue.withAlpha(25),
+                    color: AppTheme.primaryOrange.withAlpha(25),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       SelectableText(
                         'Welcome Back',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: AppTheme.darkBlue,
+                          color: AppTheme.darkOrange,
                         ),
                         textAlign: TextAlign.center,
                       ),

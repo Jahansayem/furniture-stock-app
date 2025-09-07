@@ -37,7 +37,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
@@ -253,7 +253,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceBlue,
+                  color: AppTheme.surfaceGrey,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: product.imageUrl != null
@@ -273,7 +273,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       )
                     : Icon(
                         Icons.inventory_2,
-                        color: AppTheme.primaryBlue,
+                        color: AppTheme.primaryOrange,
                         size: 30,
                       ),
               ),
@@ -288,7 +288,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     Text(
                       product.productName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppTheme.darkBlue,
+                            color: AppTheme.darkOrange,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -296,7 +296,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     Text(
                       product.productType,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.primaryBlue,
+                            color: AppTheme.primaryOrange,
                           ),
                     ),
                     if (product.description != null) ...[
@@ -419,7 +419,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               child: CircularProgressIndicator(),
                             ),
                             errorWidget: (context, url, error) => Container(
-                              color: AppTheme.surfaceBlue,
+                              color: AppTheme.surfaceGrey,
                               child: Icon(
                                 Icons.image_not_supported,
                                 color: Colors.grey[400],
@@ -435,7 +435,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       product.productName,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: AppTheme.darkBlue,
+                                color: AppTheme.darkOrange,
                                 fontWeight: FontWeight.bold,
                               ),
                     ),
@@ -444,13 +444,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryBlue.withAlpha(25),
+                        color: AppTheme.primaryOrange.withAlpha(25),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         product.productType,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.primaryBlue,
+                              color: AppTheme.primaryOrange,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
@@ -461,7 +461,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         'Description',
                         style:
                             Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AppTheme.darkBlue,
+                                  color: AppTheme.darkOrange,
                                   fontWeight: FontWeight.w600,
                                 ),
                       ),

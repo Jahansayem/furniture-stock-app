@@ -27,6 +27,10 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
   String? _selectedLocationId;
   String _deliveryType = 'home_delivery';
   double _totalAmount = 0.0;
+  
+  // Track created order for Send to Steadfast
+  String? _createdOrderId;
+  bool _showSendToCourier = false;
 
   @override
   void initState() {
@@ -144,7 +148,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 Online COD order created successfully!'),
+          content: Text('🎉 Online COD order created successfully! Status: Pending courier pickup'),
           backgroundColor: Colors.green,
         ),
       );

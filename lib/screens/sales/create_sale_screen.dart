@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../constants/onesignal_config.dart';
 import '../../services/onesignal_service.dart';
 import 'package:provider/provider.dart';
@@ -161,8 +162,9 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Sale created successfully!'),
+          content: Text('Sale created successfully! Redirecting to orders...'),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
         ),
       );
 
@@ -181,6 +183,13 @@ class _CreateSaleScreenState extends State<CreateSaleScreen> {
         _selectedLocationId = null;
         _saleType = 'offline';
         _deliveryType = 'home_delivery';
+      });
+
+      // Redirect to order management screen after a short delay
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          context.go('/orders');
+        }
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -11,7 +11,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: const Text('Profile'),
       ),
@@ -103,7 +103,7 @@ class ProfileScreen extends StatelessWidget {
                             child: CircleAvatar(
                               radius: 50,
                               backgroundColor:
-                                  AppTheme.primaryBlue.withValues(alpha: 0.1),
+                                  AppTheme.primaryOrange.withValues(alpha: 0.1),
                               backgroundImage: user.profilePictureUrl != null
                                   ? CachedNetworkImageProvider(
                                       user.profilePictureUrl!)
@@ -117,7 +117,7 @@ class ProfileScreen extends StatelessWidget {
                                           .textTheme
                                           .headlineMedium
                                           ?.copyWith(
-                                            color: AppTheme.primaryBlue,
+                                            color: AppTheme.primaryOrange,
                                             fontWeight: FontWeight.bold,
                                           ),
                                     )
@@ -130,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryBlue,
+                                color: AppTheme.primaryOrange,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
@@ -147,7 +147,7 @@ class ProfileScreen extends StatelessWidget {
                         user.displayName,
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  color: AppTheme.darkBlue,
+                                  color: AppTheme.darkOrange,
                                   fontWeight: FontWeight.bold,
                                 ),
                       ),
@@ -163,14 +163,14 @@ class ProfileScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                          color: AppTheme.primaryOrange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           user.roleDisplayName,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppTheme.primaryBlue,
+                                    color: AppTheme.primaryOrange,
                                     fontWeight: FontWeight.w600,
                                   ),
                         ),
@@ -376,15 +376,15 @@ class ProfileScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+            color: AppTheme.primaryOrange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: AppTheme.primaryBlue),
+          child: Icon(icon, color: AppTheme.primaryOrange),
         ),
         title: Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.darkBlue,
+                color: AppTheme.darkOrange,
               ),
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),

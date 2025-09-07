@@ -34,7 +34,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: const Text('Stock Overview'),
         actions: [
@@ -102,7 +102,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           'প্রোডাক্ট লিস্ট',
                           '${productProvider.products.length}',
                           Icons.inventory_2,
-                          AppTheme.primaryBlue,
+                          AppTheme.primaryOrange,
                           () => context.go('/products'),
                         ),
                       ),
@@ -180,7 +180,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                   Text(
                     'Stock by Location',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkBlue,
+                          color: AppTheme.darkOrange,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -471,9 +471,9 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
       case 'showroom':
         return Colors.green;
       case 'warehouse':
-        return AppTheme.primaryBlue;
+        return AppTheme.primaryOrange;
       default:
-        return AppTheme.primaryBlue;
+        return AppTheme.primaryOrange;
     }
   }
 
