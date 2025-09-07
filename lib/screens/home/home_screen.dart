@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
@@ -211,8 +211,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primaryBlue,
-                                AppTheme.lightBlue
+                                AppTheme.primaryOrange,
+                                AppTheme.secondaryOrange
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryBlue.withAlpha(76),
+                                color: AppTheme.primaryOrange.withAlpha(76),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
                               ),
@@ -281,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .textTheme
                                   .titleLarge
                                   ?.copyWith(
-                                    color: AppTheme.darkBlue,
+                                    color: AppTheme.darkOrange,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -349,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Quick Actions',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppTheme.darkBlue,
+                            color: AppTheme.darkOrange,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -368,14 +368,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           'প্রোডাক্ট যুক্ত করুন',
                           Icons.add_box,
-                          AppTheme.primaryBlue,
+                          AppTheme.primaryOrange,
                           () => context.go('/products/add'),
                         ),
                         _buildActionCard(
                           context,
                           'স্টকের হিসাব',
                           Icons.inventory,
-                          AppTheme.accentBlue,
+                          AppTheme.accentRed,
                           () => context.go('/stock'),
                         ),
                         _buildActionCard(
@@ -452,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .textTheme
                                   .titleLarge
                                   ?.copyWith(
-                                    color: AppTheme.darkBlue,
+                                    color: AppTheme.darkOrange,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -699,7 +699,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppTheme.darkBlue,
+                    color: AppTheme.darkOrange,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Tiro Bangla',
                   ),

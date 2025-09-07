@@ -154,17 +154,39 @@ class SteadFastService {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
+        AppLogger.debug('SteadFast status response: ${response.body}');
         
         if (responseData['status'] == 200) {
           final delivery = responseData['delivery'];
+          
+          // Check if delivery object exists
+          if (delivery != null) {
+            return SteadFastStatusResponse(
+              success: true,
+              status: delivery['delivery_status']?.toString(),
+              message: delivery['current_status']?.toString() ?? 'Status updated',
+              deliveryDate: delivery['delivery_date']?.toString(),
+              note: delivery['note']?.toString(),
+            );
+          } else {
+            return SteadFastStatusResponse(
+              success: false,
+              message: 'No delivery information available',
+            );
+          }
+        } else {
+          AppLogger.error('SteadFast API returned non-success status: ${responseData['status']}');
           return SteadFastStatusResponse(
-            success: true,
-            status: delivery['delivery_status']?.toString(),
-            message: delivery['current_status']?.toString() ?? 'Status updated',
-            deliveryDate: delivery['delivery_date']?.toString(),
-            note: delivery['note']?.toString(),
+            success: false,
+            message: responseData['message']?.toString() ?? 'API returned error status',
           );
         }
+      } else {
+        AppLogger.error('SteadFast API HTTP error: ${response.statusCode} - ${response.body}');
+        return SteadFastStatusResponse(
+          success: false,
+          message: 'HTTP ${response.statusCode}: Failed to check status',
+        );
       }
 
       return SteadFastStatusResponse(

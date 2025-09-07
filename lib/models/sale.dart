@@ -16,6 +16,7 @@ class Sale {
   final DateTime saleDate;
   final String status; // 'pending', 'completed', 'cancelled'
   final String? notes;
+  final String? cancelReason; // Reason for cancellation if status is 'cancelled'
   
   // Courier-related fields for online COD orders
   final String? deliveryType; // 'point_delivery' or 'home_delivery'
@@ -26,6 +27,7 @@ class Sale {
   final String? courierNotes; // Notes for courier
   final String? consignmentId; // Steadfast consignment ID
   final String? trackingCode; // Courier tracking code
+  final String? parcelId; // Parcel ID for tracking
   final String? courierStatus; // Delivery status from courier
   final DateTime? courierCreatedAt; // When courier order was created
   final DateTime? deliveryDate; // Actual delivery date
@@ -51,6 +53,7 @@ class Sale {
     required this.saleDate,
     required this.status,
     this.notes,
+    this.cancelReason,
     // Courier fields
     this.deliveryType,
     this.recipientPhone,
@@ -60,6 +63,7 @@ class Sale {
     this.courierNotes,
     this.consignmentId,
     this.trackingCode,
+    this.parcelId,
     this.courierStatus,
     this.courierCreatedAt,
     this.deliveryDate,
@@ -89,6 +93,7 @@ class Sale {
           : DateTime.now(),
       status: json['status'] ?? 'pending',
       notes: json['notes'],
+      cancelReason: json['cancel_reason'],
       // Courier fields
       deliveryType: json['delivery_type'],
       recipientPhone: json['recipient_phone'],
@@ -98,6 +103,7 @@ class Sale {
       courierNotes: json['courier_notes'],
       consignmentId: json['consignment_id'],
       trackingCode: json['tracking_code'],
+      parcelId: json['parcel_id'],
       courierStatus: json['courier_status'],
       courierCreatedAt: json['courier_created_at'] != null
           ? DateTime.parse(json['courier_created_at'])
@@ -130,6 +136,7 @@ class Sale {
       'sale_date': saleDate.toIso8601String(),
       'status': status,
       'notes': notes,
+      'cancel_reason': cancelReason,
       // Courier fields
       'delivery_type': deliveryType,
       'recipient_phone': recipientPhone,

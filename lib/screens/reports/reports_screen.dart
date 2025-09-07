@@ -39,7 +39,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBlue,
+      backgroundColor: AppTheme.backgroundGrey,
       appBar: AppBar(
         title: const Text('Reports'),
       ),
@@ -66,7 +66,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Total Products',
                           '${productProvider.products.length}',
                           Icons.inventory_2,
-                          AppTheme.primaryBlue,
+                          AppTheme.primaryOrange,
                           () => context.go('/products'),
                         ),
                       ),
@@ -138,7 +138,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'Stock by Location',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkBlue,
+                          color: AppTheme.darkOrange,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -267,7 +267,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'স্টক কম এলার্ট',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkBlue,
+                          color: AppTheme.darkOrange,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -281,7 +281,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'Courier Tracking',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkBlue,
+                          color: AppTheme.darkOrange,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -295,7 +295,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'Recent Activity',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkBlue,
+                          color: AppTheme.darkOrange,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -861,7 +861,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               : const Icon(Icons.refresh),
             label: Text(salesProvider.isLoading ? 'Refreshing...' : 'Refresh All Statuses'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryBlue,
+              backgroundColor: AppTheme.primaryOrange,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -1013,7 +1013,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     icon: const Icon(Icons.info_outline, size: 16),
                     label: const Text('Details'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
+                      backgroundColor: AppTheme.primaryOrange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
