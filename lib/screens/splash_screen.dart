@@ -14,24 +14,51 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuthStatus();
+    _initializeApp();
   }
 
-  Future<void> _checkAuthStatus() async {
+  Future<void> _initializeApp() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // Wait for auth provider to finish loading
-    while (authProvider.isLoading) {
-      await Future.delayed(const Duration(milliseconds: 50));
+    
+    // Listen for auth state changes instead of polling
+    authProvider.addListener(_onAuthStateChanged);
+    
+    // If already loaded, navigate immediately
+    if (!authProvider.isLoading) {
+      _navigateBasedOnAuthState(authProvider);
     }
+  }
 
+  void _onAuthStateChanged() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Only navigate when loading is complete
+    if (!authProvider.isLoading && mounted) {
+      _navigateBasedOnAuthState(authProvider);
+    }
+  }
+
+  void _navigateBasedOnAuthState(AuthProvider authProvider) {
+    // Remove listener to prevent memory leaks
+    authProvider.removeListener(_onAuthStateChanged);
+    
     if (mounted) {
       if (authProvider.isAuthenticated) {
-        context.go('/home');
+        context.go('/orders');
       } else {
         context.go('/login');
       }
     }
+  }
+
+  @override
+  void dispose() {
+    // Clean up listener in case it wasn't removed
+    if (mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      authProvider.removeListener(_onAuthStateChanged);
+    }
+    super.dispose();
   }
 
   @override

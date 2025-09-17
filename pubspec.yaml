@@ -22,6 +22,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
+  google_fonts: ^6.2.1
   
   # Navigation
   go_router: ^14.6.2
@@ -50,6 +51,10 @@ dependencies:
   # Notifications
   flutter_local_notifications: ^18.0.1
   onesignal_flutter: ^5.2.5
+
+  # File operations (for inventory)
+  file_picker: ^8.1.2
+  path_provider: ^2.1.1
 
 dev_dependencies:
   flutter_test:

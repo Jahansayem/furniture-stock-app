@@ -150,29 +150,47 @@ class SteadFastService {
       }
 
       final url = Uri.parse('${SteadFastConfig.baseUrl}$endpoint');
-      final response = await http.get(url, headers: SteadFastConfig.headers);
+      AppLogger.info('Checking status at URL: $url');
+      AppLogger.debug('Using headers: ${SteadFastConfig.headers}');
+      
+      final response = await http.get(url, headers: SteadFastConfig.headers).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception('Status check request timeout'),
+      );
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         AppLogger.debug('SteadFast status response: ${response.body}');
         
         if (responseData['status'] == 200) {
-          final delivery = responseData['delivery'];
+          // Check if we have the delivery_status directly in response
+          final deliveryStatus = responseData['delivery_status']?.toString();
           
-          // Check if delivery object exists
-          if (delivery != null) {
+          if (deliveryStatus != null) {
             return SteadFastStatusResponse(
               success: true,
-              status: delivery['delivery_status']?.toString(),
-              message: delivery['current_status']?.toString() ?? 'Status updated',
-              deliveryDate: delivery['delivery_date']?.toString(),
-              note: delivery['note']?.toString(),
+              status: deliveryStatus,
+              message: 'Status: $deliveryStatus',
+              deliveryDate: responseData['delivery_date']?.toString(),
+              note: responseData['note']?.toString(),
             );
           } else {
-            return SteadFastStatusResponse(
-              success: false,
-              message: 'No delivery information available',
-            );
+            // Fallback: try old format with delivery object
+            final delivery = responseData['delivery'];
+            if (delivery != null) {
+              return SteadFastStatusResponse(
+                success: true,
+                status: delivery['delivery_status']?.toString(),
+                message: delivery['current_status']?.toString() ?? 'Status updated',
+                deliveryDate: delivery['delivery_date']?.toString(),
+                note: delivery['note']?.toString(),
+              );
+            } else {
+              return SteadFastStatusResponse(
+                success: false,
+                message: 'No delivery status information in response',
+              );
+            }
           }
         } else {
           AppLogger.error('SteadFast API returned non-success status: ${responseData['status']}');
@@ -312,6 +330,48 @@ class SteadFastService {
       // Implementation would retrieve pending courier orders and process them
     } catch (e) {
       AppLogger.error('Failed to process pending courier orders', error: e);
+    }
+  }
+
+  /// Test API connectivity and credentials
+  Future<bool> testAPIConnectivity() async {
+    try {
+      AppLogger.info('Testing SteadFast API connectivity...');
+      
+      if (!_connectivity.isOnline) {
+        AppLogger.warning('Cannot test API: offline');
+        return false;
+      }
+
+      // Try to get balance as a simple API test
+      final url = Uri.parse('${SteadFastConfig.baseUrl}${SteadFastConfig.balanceEndpoint}');
+      AppLogger.info('Testing API at: $url');
+      AppLogger.debug('Using headers: ${SteadFastConfig.headers}');
+      
+      final response = await http.get(url, headers: SteadFastConfig.headers).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception('API test timeout'),
+      );
+
+      AppLogger.info('API test response: ${response.statusCode}');
+      AppLogger.debug('API test response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 200) {
+          AppLogger.info('✅ SteadFast API connectivity test passed');
+          return true;
+        } else {
+          AppLogger.error('❌ API returned error: ${responseData['message']}');
+          return false;
+        }
+      } else {
+        AppLogger.error('❌ API test failed with HTTP ${response.statusCode}: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      AppLogger.error('❌ API connectivity test failed', error: e);
+      return false;
     }
   }
 }

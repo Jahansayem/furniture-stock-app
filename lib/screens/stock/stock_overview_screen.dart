@@ -34,7 +34,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundGrey,
+      backgroundColor: AppTheme.lightBlue,
       appBar: AppBar(
         title: const Text('Stock Overview'),
         actions: [
@@ -59,7 +59,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                   Icon(
                     Icons.inventory_outlined,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppTheme.primaryBlue,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -102,7 +102,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           'প্রোডাক্ট লিস্ট',
                           '${productProvider.products.length}',
                           Icons.inventory_2,
-                          AppTheme.primaryOrange,
+                          AppTheme.primaryBlue,
                           () => context.go('/products'),
                         ),
                       ),
@@ -112,7 +112,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           'স্টক কম আইটেম',
                           '${stockProvider.getLowStockCount(productProvider.products)}',
                           Icons.warning,
-                          Colors.orange,
+                          AppTheme.secondaryBlue,
                           () => context.go('/products?filter=low_stock'),
                         ),
                       ),
@@ -126,7 +126,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           'ফ্যাক্টরি স্টক',
                           '${stockProvider.factoryStockCount}',
                           Icons.factory,
-                          Colors.brown,
+                          AppTheme.darkBlue,
                           () => context.go('/stock?location=factory'),
                         ),
                       ),
@@ -136,7 +136,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           'শোরুম স্টক',
                           '${stockProvider.showroomStockCount}',
                           Icons.store,
-                          Colors.green,
+                          AppTheme.accentBlue,
                           () => context.go('/stock?location=showroom'),
                         ),
                       ),
@@ -166,7 +166,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           icon: const Icon(Icons.point_of_sale),
                           label: const Text('পণ্য বিক্রয়'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppTheme.secondaryBlue,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -180,7 +180,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                   Text(
                     'Stock by Location',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkOrange,
+                          color: AppTheme.darkBlue,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -205,7 +205,7 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
                           Icon(
                             Icons.location_off,
                             size: 48,
-                            color: Colors.grey[400],
+                            color: AppTheme.primaryBlue,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -467,13 +467,13 @@ class _StockOverviewScreenState extends State<StockOverviewScreen> {
   Color _getLocationColor(String locationType) {
     switch (locationType.toLowerCase()) {
       case 'factory':
-        return Colors.brown;
+        return AppTheme.darkBlue;
       case 'showroom':
-        return Colors.green;
+        return AppTheme.accentBlue;
       case 'warehouse':
-        return AppTheme.primaryOrange;
+        return AppTheme.primaryBlue;
       default:
-        return AppTheme.primaryOrange;
+        return AppTheme.primaryBlue;
     }
   }
 

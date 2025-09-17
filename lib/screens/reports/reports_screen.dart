@@ -39,7 +39,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundGrey,
+      backgroundColor: AppTheme.lightBlue,
       appBar: AppBar(
         title: const Text('Reports'),
       ),
@@ -66,7 +66,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Total Products',
                           '${productProvider.products.length}',
                           Icons.inventory_2,
-                          AppTheme.primaryOrange,
+                          AppTheme.primaryBlue,
                           () => context.go('/products'),
                         ),
                       ),
@@ -76,7 +76,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Total Locations',
                           '${stockProvider.locations.length}',
                           Icons.location_on,
-                          Colors.green,
+                          AppTheme.accentBlue,
                           () => context.go('/stock'),
                         ),
                       ),
@@ -90,7 +90,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Total Movements',
                           '${stockProvider.movements.length}',
                           Icons.swap_horiz,
-                          Colors.purple,
+                          AppTheme.darkBlue,
                           () => context.go('/stock/movement'),
                         ),
                       ),
@@ -100,7 +100,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Low Stock Items',
                           '${stockProvider.getLowStockCount(productProvider.products)}',
                           Icons.warning,
-                          Colors.orange,
+                          AppTheme.secondaryBlue,
                           () => context.go('/products?filter=low_stock'),
                         ),
                       ),
@@ -116,7 +116,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Pending Deliveries',
                           '${salesProvider.getPendingDeliveries().length}',
                           Icons.local_shipping,
-                          Colors.orange,
+                          AppTheme.secondaryBlue,
                           () => _showCourierDetailsDialog(context, salesProvider.getPendingDeliveries(), 'Pending Deliveries'),
                         ),
                       ),
@@ -126,7 +126,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           'Total Courier Orders',
                           '${salesProvider.getCourierOrders().length}',
                           Icons.assignment,
-                          Colors.blue,
+                          AppTheme.primaryBlue,
                           () => _showCourierDetailsDialog(context, salesProvider.getCourierOrders(), 'All Courier Orders'),
                         ),
                       ),
@@ -138,7 +138,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'Stock by Location',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkOrange,
+                          color: AppTheme.darkBlue,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -252,7 +252,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 Icon(
                                   Icons.arrow_forward_ios,
                                   size: 16,
-                                  color: Colors.grey[400],
+                                  color: AppTheme.primaryBlue,
                                 ),
                               ],
                             ),
@@ -267,7 +267,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'স্টক কম এলার্ট',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkOrange,
+                          color: AppTheme.darkBlue,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -281,7 +281,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'Courier Tracking',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkOrange,
+                          color: AppTheme.darkBlue,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -295,7 +295,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     'Recent Activity',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.darkOrange,
+                          color: AppTheme.darkBlue,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -627,7 +627,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           Icon(
             icon,
             size: 48,
-            color: Colors.grey[400],
+            color: AppTheme.primaryBlue,
           ),
           const SizedBox(height: 12),
           Text(
@@ -767,12 +767,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Column(
                   children: [
-                    Icon(Icons.local_shipping, color: Colors.orange, size: 32),
+                    Icon(Icons.local_shipping, color: AppTheme.secondaryBlue, size: 32),
                     const SizedBox(height: 8),
                     Text(
                       '${pendingDeliveries.length}',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.orange,
+                        color: AppTheme.secondaryBlue,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -793,12 +793,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Column(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 32),
+                    Icon(Icons.check_circle, color: AppTheme.accentBlue, size: 32),
                     const SizedBox(height: 8),
                     Text(
                       '${allCourierOrders.where((s) => s.courierStatus == 'delivered').length}',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.green,
+                        color: AppTheme.accentBlue,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -819,12 +819,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: Column(
                   children: [
-                    Icon(Icons.assignment, color: Colors.blue, size: 32),
+                    Icon(Icons.assignment, color: AppTheme.primaryBlue, size: 32),
                     const SizedBox(height: 8),
                     Text(
                       '${allCourierOrders.length}',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.blue,
+                        color: AppTheme.primaryBlue,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -861,7 +861,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               : const Icon(Icons.refresh),
             label: Text(salesProvider.isLoading ? 'Refreshing...' : 'Refresh All Statuses'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryOrange,
+              backgroundColor: AppTheme.primaryBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -1013,7 +1013,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     icon: const Icon(Icons.info_outline, size: 16),
                     label: const Text('Details'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryOrange,
+                      backgroundColor: AppTheme.primaryBlue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
@@ -1030,16 +1030,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Color _getCourierStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'delivered':
-        return Colors.green;
+        return AppTheme.accentBlue;
       case 'pending':
       case 'in_transit':
-        return Colors.orange;
+        return AppTheme.secondaryBlue;
       case 'failed':
       case 'cancelled':
       case 'returned':
-        return Colors.red;
+        return AppTheme.primaryBlue;
       default:
-        return Colors.grey;
+        return AppTheme.primaryBlue;
     }
   }
 
@@ -1095,7 +1095,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.local_shipping_outlined, size: 64, color: Colors.grey[400]),
+                        Icon(Icons.local_shipping_outlined, size: 64, color: AppTheme.primaryBlue),
                         const SizedBox(height: 16),
                         Text(
                           'No courier orders found',

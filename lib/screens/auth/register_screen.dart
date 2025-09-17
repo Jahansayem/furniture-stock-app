@@ -57,16 +57,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryOrange.withAlpha(51),
+                      color: Theme.of(context).primaryColor.withAlpha(51),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_add,
                   size: 50,
-                  color: AppTheme.primaryOrange,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
 
@@ -75,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Create Account',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppTheme.darkOrange,
+                      color: Theme.of(context).primaryColor,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Join the team',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.primaryOrange,
+                      color: Theme.of(context).primaryColor,
                     ),
               ),
 
@@ -97,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryOrange.withAlpha(25),
+                      color: Theme.of(context).primaryColor.withAlpha(25),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),

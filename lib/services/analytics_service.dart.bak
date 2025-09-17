@@ -1,0 +1,686 @@
+import 'dart:math';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../config/supabase_config.dart';
+import '../models/analytics.dart';
+import '../models/sale.dart';
+import '../models/product.dart';
+import '../models/stock.dart';
+import '../utils/logger.dart';
+
+/// Advanced analytics service for business intelligence
+class AnalyticsService {
+  static final AnalyticsService _instance = AnalyticsService._internal();
+  factory AnalyticsService() => _instance;
+  AnalyticsService._internal();
+
+  final SupabaseClient _supabase = Supabase.instance.client;
+
+  /// Generate comprehensive sales metrics
+  Future<SalesMetrics> getSalesMetrics({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? locationId,
+  }) async {
+    try {
+      final start = startDate ?? DateTime.now().subtract(const Duration(days: 30));
+      final end = endDate ?? DateTime.now();
+
+      AppLogger.info('Generating sales metrics from $start to $end');
+
+      // Build query with filters
+      var query = _supabase
+          .from('sales')
+          .select('''
+            *,
+            customer:customers(name, phone),
+            items:sale_items(
+              quantity,
+              unit_price,
+              product:products(name, cost_price)
+            )
+          ''')
+          .gte('created_at', start.toIso8601String())
+          .lte('created_at', end.toIso8601String());
+
+      if (locationId != null) {
+        query = query.eq('location_id', locationId);
+      }
+
+      final salesData = await query;
+
+      // Calculate metrics
+      final sales = salesData.map((s) => Sale.fromJson(s)).toList();
+      
+      return SalesMetrics(
+        totalRevenue: _calculateTotalRevenue(sales),
+        totalOrders: sales.length,
+        averageOrderValue: _calculateAverageOrderValue(sales),
+        totalCustomers: _countUniqueCustomers(sales),
+        growthRate: await _calculateGrowthRate(start, end, locationId),
+        dailySales: await _getDailySales(start, end, locationId),
+        topProducts: await _getTopProducts(start, end, locationId),
+        repPerformance: await _getSalesRepPerformance(start, end, locationId),
+      );
+    } catch (e) {
+      AppLogger.error('Failed to generate sales metrics: $e');
+      return SalesMetrics.empty();
+    }
+  }
+
+  /// Generate inventory analytics
+  Future<InventoryMetrics> getInventoryMetrics({String? locationId}) async {
+    try {
+      AppLogger.info('Generating inventory metrics');
+
+      var query = _supabase
+          .from('stocks')
+          .select('''
+            *,
+            product:products(name, cost_price, selling_price),
+            location:stock_locations(name)
+          ''');
+
+      if (locationId != null) {
+        query = query.eq('location_id', locationId);
+      }
+
+      final stockData = await query;
+      final stocks = stockData.map((s) => Stock.fromJson(s)).toList();
+
+      return InventoryMetrics(
+        totalProducts: stocks.length,
+        totalInventoryValue: _calculateInventoryValue(stocks),
+        lowStockProducts: _countLowStock(stocks),
+        outOfStockProducts: _countOutOfStock(stocks),
+        turnoverRate: await _calculateTurnoverRate(locationId),
+        stockAlerts: _generateStockAlerts(stocks),
+        trends: await _getInventoryTrends(locationId),
+      );
+    } catch (e) {
+      AppLogger.error('Failed to generate inventory metrics: $e');
+      return InventoryMetrics.empty();
+    }
+  }
+
+  /// Generate financial metrics and reporting
+  Future<FinancialMetrics> getFinancialMetrics({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? locationId,
+  }) async {
+    try {
+      final start = startDate ?? DateTime.now().subtract(const Duration(days: 30));
+      final end = endDate ?? DateTime.now();
+
+      AppLogger.info('Generating financial metrics from $start to $end');
+
+      // Get sales data for revenue calculation
+      final salesMetrics = await getSalesMetrics(
+        startDate: start,
+        endDate: end,
+        locationId: locationId,
+      );
+
+      // Calculate COGS (Cost of Goods Sold)
+      final cogs = await _calculateCOGS(start, end, locationId);
+      
+      // Get operating expenses
+      final operatingExpenses = await _getOperatingExpenses(start, end, locationId);
+      final expenseBreakdown = await _getExpenseBreakdown(start, end, locationId);
+
+      final totalRevenue = salesMetrics.totalRevenue;
+      final totalExpenses = cogs + operatingExpenses;
+      final grossProfit = totalRevenue - cogs;
+      final netProfit = grossProfit - operatingExpenses;
+      final profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+      return FinancialMetrics(
+        totalRevenue: totalRevenue,
+        totalExpenses: totalExpenses,
+        grossProfit: grossProfit,
+        netProfit: netProfit,
+        profitMargin: profitMargin,
+        costOfGoodsSold: cogs,
+        operatingExpenses: operatingExpenses,
+        expenseBreakdown: expenseBreakdown,
+      );
+    } catch (e) {
+      AppLogger.error('Failed to generate financial metrics: $e');
+      return FinancialMetrics.empty();
+    }
+  }
+
+  /// Generate predictive analytics
+  Future<PredictiveAnalysis> generatePredictiveAnalysis({
+    String type = 'demand_forecast',
+    String? productId,
+    String? locationId,
+  }) async {
+    try {
+      AppLogger.info('Generating predictive analysis: $type');
+
+      switch (type) {
+        case 'demand_forecast':
+          return await _generateDemandForecast(productId, locationId);
+        case 'inventory_optimization':
+          return await _generateInventoryOptimization(locationId);
+        case 'sales_prediction':
+          return await _generateSalesPrediction(locationId);
+        case 'risk_assessment':
+          return await _generateRiskAssessment(locationId);
+        default:
+          throw Exception('Unknown analysis type: $type');
+      }
+    } catch (e) {
+      AppLogger.error('Failed to generate predictive analysis: $e');
+      return PredictiveAnalysis(
+        analysisId: DateTime.now().millisecondsSinceEpoch.toString(),
+        type: type,
+        generatedAt: DateTime.now(),
+        predictions: {},
+        confidence: 0,
+        recommendations: [],
+      );
+    }
+  }
+
+  /// Store analytics event
+  Future<void> trackAnalyticsEvent({
+    required String type,
+    required Map<String, dynamic> data,
+    String? userId,
+    String? locationId,
+  }) async {
+    try {
+      await _supabase.from('analytics_events').insert({
+        'type': type,
+        'data': data,
+        'user_id': userId,
+        'location_id': locationId,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      AppLogger.error('Failed to track analytics event: $e');
+    }
+  }
+
+  // Private helper methods
+  double _calculateTotalRevenue(List<Sale> sales) {
+    return sales.fold(0.0, (sum, sale) => sum + sale.totalAmount);
+  }
+
+  double _calculateAverageOrderValue(List<Sale> sales) {
+    if (sales.isEmpty) return 0.0;
+    return _calculateTotalRevenue(sales) / sales.length;
+  }
+
+  int _countUniqueCustomers(List<Sale> sales) {
+    final customerIds = sales.map((s) => s.customerId).where((id) => id != null).toSet();
+    return customerIds.length;
+  }
+
+  Future<double> _calculateGrowthRate(DateTime start, DateTime end, String? locationId) async {
+    try {
+      // Compare with previous period
+      final periodDays = end.difference(start).inDays;
+      final previousStart = start.subtract(Duration(days: periodDays));
+      final previousEnd = start;
+
+      final currentMetrics = await getSalesMetrics(
+        startDate: start,
+        endDate: end,
+        locationId: locationId,
+      );
+
+      final previousMetrics = await getSalesMetrics(
+        startDate: previousStart,
+        endDate: previousEnd,
+        locationId: locationId,
+      );
+
+      if (previousMetrics.totalRevenue == 0) return 0.0;
+
+      return ((currentMetrics.totalRevenue - previousMetrics.totalRevenue) / 
+              previousMetrics.totalRevenue) * 100;
+    } catch (e) {
+      AppLogger.error('Failed to calculate growth rate: $e');
+      return 0.0;
+    }
+  }
+
+  Future<List<DailySales>> _getDailySales(DateTime start, DateTime end, String? locationId) async {
+    try {
+      final List<DailySales> dailySales = [];
+      final current = DateTime(start.year, start.month, start.day);
+      
+      while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
+        final dayStart = current;
+        final dayEnd = current.add(const Duration(days: 1));
+
+        var query = _supabase
+            .from('sales')
+            .select('total_amount')
+            .gte('created_at', dayStart.toIso8601String())
+            .lt('created_at', dayEnd.toIso8601String());
+
+        if (locationId != null) {
+          query = query.eq('location_id', locationId);
+        }
+
+        final salesData = await query;
+        
+        final revenue = salesData.fold(0.0, (sum, sale) => sum + (sale['total_amount'] ?? 0));
+        final orderCount = salesData.length;
+
+        dailySales.add(DailySales(
+          date: current,
+          revenue: revenue,
+          orderCount: orderCount,
+        ));
+
+        current.add(const Duration(days: 1));
+      }
+
+      return dailySales;
+    } catch (e) {
+      AppLogger.error('Failed to get daily sales: $e');
+      return [];
+    }
+  }
+
+  Future<List<TopProduct>> _getTopProducts(DateTime start, DateTime end, String? locationId, {int limit = 10}) async {
+    try {
+      var query = _supabase
+          .from('sale_items')
+          .select('''
+            product_id,
+            quantity,
+            unit_price,
+            product:products(name, cost_price),
+            sale:sales!inner(created_at, location_id)
+          ''');
+
+      // Add date filter through join
+      query = query
+          .gte('sale.created_at', start.toIso8601String())
+          .lte('sale.created_at', end.toIso8601String());
+
+      if (locationId != null) {
+        query = query.eq('sale.location_id', locationId);
+      }
+
+      final saleItemsData = await query;
+
+      // Group by product and calculate metrics
+      final Map<String, TopProduct> productMetrics = {};
+
+      for (final item in saleItemsData) {
+        final productId = item['product_id'];
+        final quantity = item['quantity'] ?? 0;
+        final unitPrice = (item['unit_price'] ?? 0).toDouble();
+        final revenue = quantity * unitPrice;
+        final product = item['product'];
+        final productName = product?['name'] ?? 'Unknown Product';
+        final costPrice = (product?['cost_price'] ?? 0).toDouble();
+        final profitMargin = unitPrice > 0 ? ((unitPrice - costPrice) / unitPrice) * 100 : 0;
+
+        if (productMetrics.containsKey(productId)) {
+          final existing = productMetrics[productId]!;
+          productMetrics[productId] = TopProduct(
+            productId: productId,
+            productName: productName,
+            unitsSold: existing.unitsSold + quantity,
+            revenue: existing.revenue + revenue,
+            profitMargin: (existing.profitMargin + profitMargin) / 2, // Average margin
+          );
+        } else {
+          productMetrics[productId] = TopProduct(
+            productId: productId,
+            productName: productName,
+            unitsSold: quantity,
+            revenue: revenue,
+            profitMargin: profitMargin,
+          );
+        }
+      }
+
+      // Sort by revenue and return top products
+      final topProducts = productMetrics.values.toList()
+        ..sort((a, b) => b.revenue.compareTo(a.revenue));
+
+      return topProducts.take(limit).toList();
+    } catch (e) {
+      AppLogger.error('Failed to get top products: $e');
+      return [];
+    }
+  }
+
+  Future<List<SalesRepPerformance>> _getSalesRepPerformance(DateTime start, DateTime end, String? locationId) async {
+    try {
+      var query = _supabase
+          .from('sales')
+          .select('''
+            sales_rep_id,
+            total_amount,
+            user_profiles!inner(full_name)
+          ''')
+          .gte('created_at', start.toIso8601String())
+          .lte('created_at', end.toIso8601String())
+          .not('sales_rep_id', 'is', null);
+
+      if (locationId != null) {
+        query = query.eq('location_id', locationId);
+      }
+
+      final salesData = await query;
+
+      // Group by sales rep
+      final Map<String, List<Map<String, dynamic>>> repSales = {};
+      
+      for (final sale in salesData) {
+        final repId = sale['sales_rep_id'];
+        if (repId != null) {
+          repSales.putIfAbsent(repId, () => []).add(sale);
+        }
+      }
+
+      // Calculate performance metrics
+      final List<SalesRepPerformance> performance = [];
+      
+      for (final entry in repSales.entries) {
+        final repId = entry.key;
+        final sales = entry.value;
+        
+        final totalSales = sales.fold(0.0, (sum, sale) => sum + (sale['total_amount'] ?? 0));
+        final ordersCompleted = sales.length;
+        final averageOrderValue = ordersCompleted > 0 ? totalSales / ordersCompleted : 0;
+        final repName = sales.first['user_profiles']?['full_name'] ?? 'Unknown Rep';
+        
+        // TODO: Calculate conversion rate based on leads/opportunities
+        const conversionRate = 75.0; // Placeholder
+
+        performance.add(SalesRepPerformance(
+          repId: repId,
+          repName: repName,
+          totalSales: totalSales,
+          ordersCompleted: ordersCompleted,
+          conversionRate: conversionRate,
+          averageOrderValue: averageOrderValue,
+        ));
+      }
+
+      // Sort by total sales
+      performance.sort((a, b) => b.totalSales.compareTo(a.totalSales));
+      
+      return performance;
+    } catch (e) {
+      AppLogger.error('Failed to get sales rep performance: $e');
+      return [];
+    }
+  }
+
+  double _calculateInventoryValue(List<Stock> stocks) {
+    return stocks.fold(0.0, (sum, stock) {
+      final costPrice = stock.product?.costPrice ?? 0;
+      return sum + (stock.quantity * costPrice);
+    });
+  }
+
+  int _countLowStock(List<Stock> stocks) {
+    return stocks.where((stock) => 
+      stock.quantity <= stock.minimumStock && stock.quantity > 0
+    ).length;
+  }
+
+  int _countOutOfStock(List<Stock> stocks) {
+    return stocks.where((stock) => stock.quantity <= 0).length;
+  }
+
+  List<StockAlert> _generateStockAlerts(List<Stock> stocks) {
+    final alerts = <StockAlert>[];
+
+    for (final stock in stocks) {
+      AlertSeverity? severity;
+      
+      if (stock.quantity <= 0) {
+        severity = AlertSeverity.critical;
+      } else if (stock.quantity <= stock.minimumStock * 0.5) {
+        severity = AlertSeverity.high;
+      } else if (stock.quantity <= stock.minimumStock) {
+        severity = AlertSeverity.medium;
+      }
+
+      if (severity != null) {
+        alerts.add(StockAlert(
+          productId: stock.productId,
+          productName: stock.product?.name ?? 'Unknown Product',
+          currentStock: stock.quantity,
+          minimumStock: stock.minimumStock,
+          severity: severity,
+        ));
+      }
+    }
+
+    // Sort by severity and stock level
+    alerts.sort((a, b) {
+      final severityComparison = b.severity.index.compareTo(a.severity.index);
+      if (severityComparison != 0) return severityComparison;
+      return a.currentStock.compareTo(b.currentStock);
+    });
+
+    return alerts;
+  }
+
+  Future<double> _calculateTurnoverRate(String? locationId) async {
+    // Simplified turnover rate calculation
+    // In a real implementation, this would be more sophisticated
+    try {
+      final inventoryValue = await getInventoryMetrics(locationId: locationId)
+          .then((metrics) => metrics.totalInventoryValue);
+      
+      final monthlyRevenue = await getSalesMetrics(
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+        locationId: locationId,
+      ).then((metrics) => metrics.totalRevenue);
+
+      return inventoryValue > 0 ? monthlyRevenue / inventoryValue : 0;
+    } catch (e) {
+      AppLogger.error('Failed to calculate turnover rate: $e');
+      return 0;
+    }
+  }
+
+  Future<List<InventoryTrend>> _getInventoryTrends(String? locationId) async {
+    // Simplified inventory trends
+    // In a real implementation, this would track historical inventory values
+    final trends = <InventoryTrend>[];
+    final now = DateTime.now();
+    
+    for (int i = 30; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+      // Mock trend data - in reality, would come from historical records
+      final value = 100000 + (Random().nextDouble() * 20000);
+      final stockLevel = 500 + Random().nextInt(200);
+      
+      trends.add(InventoryTrend(
+        date: date,
+        value: value,
+        stockLevel: stockLevel,
+      ));
+    }
+    
+    return trends;
+  }
+
+  Future<double> _calculateCOGS(DateTime start, DateTime end, String? locationId) async {
+    // Calculate Cost of Goods Sold based on sale items
+    try {
+      var query = _supabase
+          .from('sale_items')
+          .select('''
+            quantity,
+            product:products(cost_price),
+            sale:sales!inner(created_at, location_id)
+          ''')
+          .gte('sale.created_at', start.toIso8601String())
+          .lte('sale.created_at', end.toIso8601String());
+
+      if (locationId != null) {
+        query = query.eq('sale.location_id', locationId);
+      }
+
+      final saleItemsData = await query;
+      
+      double cogs = 0;
+      for (final item in saleItemsData) {
+        final quantity = item['quantity'] ?? 0;
+        final costPrice = (item['product']?['cost_price'] ?? 0).toDouble();
+        cogs += quantity * costPrice;
+      }
+      
+      return cogs;
+    } catch (e) {
+      AppLogger.error('Failed to calculate COGS: $e');
+      return 0;
+    }
+  }
+
+  Future<double> _getOperatingExpenses(DateTime start, DateTime end, String? locationId) async {
+    // Placeholder for operating expenses
+    // In a real implementation, this would come from an expenses table
+    return 50000.0; // Mock operating expenses
+  }
+
+  Future<Map<String, double>> _getExpenseBreakdown(DateTime start, DateTime end, String? locationId) async {
+    // Placeholder for expense breakdown
+    // In a real implementation, this would come from categorized expenses
+    return {
+      'Rent': 15000.0,
+      'Utilities': 5000.0,
+      'Salaries': 25000.0,
+      'Marketing': 3000.0,
+      'Miscellaneous': 2000.0,
+    };
+  }
+
+  Future<PredictiveAnalysis> _generateDemandForecast(String? productId, String? locationId) async {
+    // Simplified demand forecasting algorithm
+    // In a real implementation, this would use machine learning models
+    
+    final analysisId = DateTime.now().millisecondsSinceEpoch.toString();
+    final predictions = <String, dynamic>{};
+    final recommendations = <Recommendation>[];
+    
+    // Mock demand forecast based on historical data
+    predictions['next_month_demand'] = 150 + Random().nextInt(100);
+    predictions['seasonal_trend'] = 'increasing';
+    predictions['confidence_interval'] = [120, 200];
+    
+    recommendations.add(Recommendation(
+      id: '${analysisId}_1',
+      title: 'Increase Stock Level',
+      description: 'Based on predicted demand increase, consider increasing stock levels by 25%',
+      type: RecommendationType.inventory,
+      impact: 8.5,
+      actionRequired: 'Adjust minimum stock levels in inventory system',
+    ));
+    
+    return PredictiveAnalysis(
+      analysisId: analysisId,
+      type: 'demand_forecast',
+      generatedAt: DateTime.now(),
+      predictions: predictions,
+      confidence: 0.85,
+      recommendations: recommendations,
+    );
+  }
+
+  Future<PredictiveAnalysis> _generateInventoryOptimization(String? locationId) async {
+    // Inventory optimization analysis
+    final analysisId = DateTime.now().millisecondsSinceEpoch.toString();
+    final predictions = <String, dynamic>{};
+    final recommendations = <Recommendation>[];
+    
+    predictions['optimal_reorder_point'] = 50;
+    predictions['economic_order_quantity'] = 200;
+    predictions['carrying_cost_reduction'] = '15%';
+    
+    recommendations.add(Recommendation(
+      id: '${analysisId}_1',
+      title: 'Optimize Reorder Points',
+      description: 'Adjust reorder points to reduce carrying costs while maintaining service levels',
+      type: RecommendationType.optimization,
+      impact: 7.2,
+      actionRequired: 'Update inventory parameters in system',
+    ));
+    
+    return PredictiveAnalysis(
+      analysisId: analysisId,
+      type: 'inventory_optimization',
+      generatedAt: DateTime.now(),
+      predictions: predictions,
+      confidence: 0.78,
+      recommendations: recommendations,
+    );
+  }
+
+  Future<PredictiveAnalysis> _generateSalesPrediction(String? locationId) async {
+    // Sales prediction analysis
+    final analysisId = DateTime.now().millisecondsSinceEpoch.toString();
+    final predictions = <String, dynamic>{};
+    final recommendations = <Recommendation>[];
+    
+    predictions['next_month_revenue'] = 185000 + Random().nextInt(50000);
+    predictions['growth_trajectory'] = 'positive';
+    predictions['seasonal_factors'] = ['wedding_season', 'holiday_period'];
+    
+    recommendations.add(Recommendation(
+      id: '${analysisId}_1',
+      title: 'Prepare for Peak Season',
+      description: 'Increase marketing spend and inventory levels for predicted peak season',
+      type: RecommendationType.sales,
+      impact: 9.1,
+      actionRequired: 'Plan marketing campaigns and stock increases',
+    ));
+    
+    return PredictiveAnalysis(
+      analysisId: analysisId,
+      type: 'sales_prediction',
+      generatedAt: DateTime.now(),
+      predictions: predictions,
+      confidence: 0.82,
+      recommendations: recommendations,
+    );
+  }
+
+  Future<PredictiveAnalysis> _generateRiskAssessment(String? locationId) async {
+    // Risk assessment analysis
+    final analysisId = DateTime.now().millisecondsSinceEpoch.toString();
+    final predictions = <String, dynamic>{};
+    final recommendations = <Recommendation>[];
+    
+    predictions['cash_flow_risk'] = 'medium';
+    predictions['inventory_risk'] = 'low';
+    predictions['market_risk'] = 'medium';
+    
+    recommendations.add(Recommendation(
+      id: '${analysisId}_1',
+      title: 'Diversify Supplier Base',
+      description: 'Reduce supplier concentration risk by adding alternative suppliers',
+      type: RecommendationType.risk,
+      impact: 6.8,
+      actionRequired: 'Identify and qualify additional suppliers',
+    ));
+    
+    return PredictiveAnalysis(
+      analysisId: analysisId,
+      type: 'risk_assessment',
+      generatedAt: DateTime.now(),
+      predictions: predictions,
+      confidence: 0.75,
+      recommendations: recommendations,
+    );
+  }
+}

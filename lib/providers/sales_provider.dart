@@ -6,6 +6,7 @@ import '../config/supabase_config.dart';
 import '../constants/onesignal_config.dart';
 import '../models/sale.dart';
 import '../services/onesignal_service.dart';
+import '../services/sms_service.dart';
 import '../services/steadfast_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/sync_service.dart';
@@ -16,6 +17,7 @@ class SalesProvider extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ConnectivityService _connectivity = ConnectivityService();
   final SteadFastService _courierService = SteadFastService();
+  final SmsService _smsService = SmsService();
 
   List<Sale> _sales = [];
   bool _isLoading = false;
@@ -198,7 +200,7 @@ class SalesProvider extends ChangeNotifier {
 
       // Create sale record with courier fields
       final saleId = const Uuid().v4();
-      final orderStatus = saleType == 'online_cod' ? 'pending' : 'completed';
+      final orderStatus = saleType == 'online_cod' ? 'in_review' : 'completed';
       final saleData = {
         'id': saleId,
         'product_id': productId,
@@ -432,7 +434,9 @@ class SalesProvider extends ChangeNotifier {
         _setLoading(false);
         return true;
       } else {
-        _setError('Failed to check courier status: ${statusResponse?.message ?? 'Unknown error'}');
+        final errorMessage = 'Failed to check courier status: ${statusResponse?.message ?? 'Unknown error'}';
+        AppLogger.error(errorMessage);
+        _setError(errorMessage);
         _setLoading(false);
         return false;
       }
@@ -489,28 +493,39 @@ class SalesProvider extends ChangeNotifier {
     _clearError();
 
     try {
+      AppLogger.info('Attempting to send order $saleId to courier');
+      
       // Get the sale details
       final sale = _sales.firstWhere((s) => s.id == saleId);
+      AppLogger.info('Found sale: ${sale.customerName}, Type: ${sale.saleType}, Status: ${sale.status}');
       
       // Validate that this is a pending online COD order
       if (sale.saleType != 'online_cod') {
-        _setError('Only online COD orders can be sent to courier');
+        final error = 'Only online COD orders can be sent to courier. Current type: ${sale.saleType}';
+        AppLogger.error(error);
+        _setError(error);
         _setLoading(false);
         return false;
       }
 
-      if (sale.status != 'pending') {
-        _setError('Order is not in pending status');
+      if (sale.status != 'pending' && sale.status != 'in_review') {
+        final error = 'Order is not in pending status. Current status: ${sale.status}';
+        AppLogger.error(error);
+        _setError(error);
         _setLoading(false);
         return false;
       }
 
       if (sale.recipientName == null || sale.recipientPhone == null || 
           sale.recipientAddress == null || sale.codAmount == null) {
-        _setError('Missing required courier information');
+        final error = 'Missing required courier information - Name: ${sale.recipientName}, Phone: ${sale.recipientPhone}, Address: ${sale.recipientAddress}, COD: ${sale.codAmount}';
+        AppLogger.error(error);
+        _setError(error);
         _setLoading(false);
         return false;
       }
+
+      AppLogger.info('Order validation passed. Calling Steadfast API...');
 
       // Create courier order
       final response = await _courierService.createOrder(
@@ -522,6 +537,8 @@ class SalesProvider extends ChangeNotifier {
         notes: sale.courierNotes,
       );
 
+      AppLogger.info('Steadfast API response received - Success: ${response?.success}, Message: ${response?.message}');
+      
       if (response != null && response.success) {
         // Update the sale record with courier information
         await _supabase.from(SupabaseConfig.salesTable)
@@ -529,10 +546,34 @@ class SalesProvider extends ChangeNotifier {
               'consignment_id': response.consignmentId,
               'tracking_code': response.trackingCode,
               'courier_status': 'pending', // Use valid Steadfast API status
-              'status': 'completed', // Mark as completed since it's sent to courier
+              'status': 'pending', // Mark as pending since it's sent to courier
               'courier_created_at': DateTime.now().toIso8601String(),
             })
             .eq('id', saleId);
+
+        // Send Bengali SMS notification to customer about courier dispatch
+        if (sale.recipientPhone != null && sale.recipientPhone!.isNotEmpty) {
+          try {
+            final trackingCode = response.trackingCode ?? response.consignmentId ?? 'N/A';
+            final codAmount = sale.codAmount ?? sale.totalAmount;
+            
+            final smsSuccess = await _smsService.sendBengaliCourierDispatchSMS(
+              customerName: sale.recipientName ?? sale.customerName,
+              customerPhone: sale.recipientPhone!,
+              amount: codAmount,
+              trackingId: trackingCode,
+            );
+            
+            if (smsSuccess) {
+              AppLogger.info('Bengali courier dispatch SMS sent to customer: ${sale.recipientPhone}');
+            } else {
+              AppLogger.warning('Failed to send Bengali courier dispatch SMS to customer');
+            }
+          } catch (e) {
+            // Don't fail the courier dispatch if SMS fails
+            AppLogger.error('Bengali SMS dispatch notification failed', error: e);
+          }
+        }
 
         // Refresh sales data
         await fetchSales();
@@ -556,7 +597,7 @@ class SalesProvider extends ChangeNotifier {
   /// Get all pending orders (not yet sent to courier)
   List<Sale> getPendingOrders() {
     return _sales.where((sale) => 
-      sale.saleType == 'online_cod' && sale.status == 'pending'
+      sale.saleType == 'online_cod' && (sale.status == 'pending' || sale.status == 'in_review')
     ).toList();
   }
 
@@ -583,7 +624,7 @@ class SalesProvider extends ChangeNotifier {
         return false;
       }
 
-      if (sale.status != 'pending') {
+      if (sale.status != 'pending' && sale.status != 'in_review') {
         _setError('Order is not in pending status and cannot be cancelled');
         _setLoading(false);
         return false;
@@ -655,6 +696,33 @@ class SalesProvider extends ChangeNotifier {
         AppLogger.error('Failed to send order cancellation notification', error: e);
       }
 
+      // Send SMS to customer about order cancellation
+      try {
+        if (sale.customerPhone != null && sale.customerPhone!.isNotEmpty) {
+          AppLogger.info('Sending cancellation SMS to customer: ${sale.customerPhone}');
+          
+          final orderId = sale.id.substring(0, 8);
+          final smsSuccess = await _smsService.sendOrderCancellationSMS(
+            customerName: sale.customerName,
+            customerPhone: sale.customerPhone!,
+            orderId: orderId,
+            productName: sale.productName ?? 'Product',
+            amount: sale.totalAmount,
+          );
+          
+          if (smsSuccess) {
+            AppLogger.info('Order cancellation SMS sent successfully');
+          } else {
+            AppLogger.warning('Order cancellation SMS failed to send');
+          }
+        } else {
+          AppLogger.info('No customer phone number available for cancellation SMS');
+        }
+      } catch (e) {
+        // Don't fail the operation if SMS fails
+        AppLogger.error('Failed to send order cancellation SMS', error: e);
+      }
+
       // Refresh sales data
       await fetchSales();
 
@@ -696,7 +764,7 @@ class SalesProvider extends ChangeNotifier {
         return false;
       }
 
-      if (sale.status != 'pending') {
+      if (sale.status != 'pending' && sale.status != 'in_review') {
         _setError('Order is not in pending status and cannot be edited');
         _setLoading(false);
         return false;
@@ -776,6 +844,79 @@ class SalesProvider extends ChangeNotifier {
       _setError('Error updating order: ${e.toString()}');
       _setLoading(false);
       return false;
+    }
+  }
+
+  /// Check if warning SMS can be sent (not sent in last 16 hours)
+  Future<bool> canSendWarningSMS(String phoneNumber) async {
+    try {
+      final smsService = SmsService();
+      final lastSMSTime = await smsService.getLastWarningSMSTime(phoneNumber);
+      
+      if (lastSMSTime == null) {
+        return true; // No previous SMS found
+      }
+      
+      final now = DateTime.now();
+      final timeDifference = now.difference(lastSMSTime);
+      final hoursSinceLastSMS = timeDifference.inHours;
+      
+      return hoursSinceLastSMS >= 16;
+    } catch (e) {
+      AppLogger.error('Error checking warning SMS availability', error: e);
+      return true; // If error, allow SMS (fail-safe)
+    }
+  }
+
+  /// Get time remaining until next warning SMS can be sent
+  Future<Duration?> getTimeUntilNextWarningSMS(String phoneNumber) async {
+    try {
+      final smsService = SmsService();
+      final lastSMSTime = await smsService.getLastWarningSMSTime(phoneNumber);
+      
+      if (lastSMSTime == null) {
+        return null; // No previous SMS, can send immediately
+      }
+      
+      final now = DateTime.now();
+      final timeSinceLastSMS = now.difference(lastSMSTime);
+      const rateLimitDuration = Duration(hours: 16);
+      
+      if (timeSinceLastSMS >= rateLimitDuration) {
+        return null; // Rate limit has expired, can send
+      }
+      
+      return rateLimitDuration - timeSinceLastSMS;
+    } catch (e) {
+      AppLogger.error('Error calculating warning SMS time remaining', error: e);
+      return null; // If error, return null (can send)
+    }
+  }
+
+  /// Get warning SMS button state information
+  Future<Map<String, dynamic>> getWarningSMSButtonState(String phoneNumber) async {
+    try {
+      final canSend = await canSendWarningSMS(phoneNumber);
+      final timeRemaining = await getTimeUntilNextWarningSMS(phoneNumber);
+      
+      return {
+        'canSend': canSend,
+        'timeRemaining': timeRemaining,
+        'isEnabled': canSend,
+        'buttonText': canSend ? 'Warning SMS' : 'SMS Sent',
+        'hoursRemaining': timeRemaining?.inHours ?? 0,
+        'minutesRemaining': timeRemaining != null ? (timeRemaining.inMinutes % 60) : 0,
+      };
+    } catch (e) {
+      AppLogger.error('Error getting warning SMS button state', error: e);
+      return {
+        'canSend': true,
+        'timeRemaining': null,
+        'isEnabled': true,
+        'buttonText': 'Warning SMS',
+        'hoursRemaining': 0,
+        'minutesRemaining': 0,
+      };
     }
   }
 }

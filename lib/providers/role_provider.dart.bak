@@ -1,0 +1,341 @@
+import 'package:flutter/foundation.dart';
+import '../models/user_role.dart';
+import '../models/user_profile.dart';
+import '../utils/logger.dart';
+
+class RoleProvider extends ChangeNotifier {
+  UserRole? _currentRole;
+  Map<String, bool> _permissions = {};
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  UserRole? get currentRole => _currentRole;
+  Map<String, bool> get permissions => _permissions;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  // Role-based access checks
+  bool get isOwner => _currentRole == UserRole.owner;
+  bool get isManager => _currentRole == UserRole.manager;
+  bool get isStaff => _currentRole == UserRole.staff;
+  bool get isEmployee => _currentRole == UserRole.employee;
+
+  // Navigation access
+  bool get canAccessOwnerDashboard => hasPermission(Permission.viewOwnerDashboard);
+  bool get canAccessManagerDashboard => hasPermission(Permission.viewManagerDashboard);
+  bool get canAccessStaffDashboard => hasPermission(Permission.viewStaffDashboard);
+  bool get canAccessEmployeeDashboard => hasPermission(Permission.viewEmployeeDashboard);
+
+  // Feature access
+  bool get canManageEmployees => hasPermission(Permission.manageSettings);
+  bool get canViewFinance => hasPermission(Permission.viewFinance);
+  bool get canManageProduction => hasPermission(Permission.manageProduction);
+  bool get canExportReports => hasPermission(Permission.exportReports);
+
+  void initialize(UserProfile userProfile) {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      // Set role from user profile
+      _currentRole = UserRole.fromString(userProfile.role);
+      
+      // Load permissions for the role
+      _loadPermissions();
+      
+      AppLogger.info('RoleProvider initialized for role: ${_currentRole?.displayName}');
+    } catch (e) {
+      _setError('Failed to initialize role: $e');
+      AppLogger.error('RoleProvider initialization failed', error: e);
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void updateRole(UserRole role) {
+    if (_currentRole == role) return;
+
+    try {
+      _setLoading(true);
+      _clearError();
+
+      _currentRole = role;
+      _loadPermissions();
+
+      AppLogger.info('Role updated to: ${role.displayName}');
+    } catch (e) {
+      _setError('Failed to update role: $e');
+      AppLogger.error('Role update failed', error: e);
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void _loadPermissions() {
+    if (_currentRole == null) {
+      _permissions = {};
+      return;
+    }
+
+    _permissions = PermissionMatrix.getPermissionMap(_currentRole!);
+    AppLogger.info('Loaded ${_permissions.length} permissions for role: ${_currentRole!.displayName}');
+  }
+
+  bool hasPermission(Permission permission) {
+    return _permissions[permission.value] ?? false;
+  }
+
+  bool hasAnyPermission(List<Permission> permissions) {
+    return permissions.any((permission) => hasPermission(permission));
+  }
+
+  bool hasAllPermissions(List<Permission> permissions) {
+    return permissions.every((permission) => hasPermission(permission));
+  }
+
+  // Permission checks for UI elements
+  bool canAccessRoute(String route) {
+    switch (route) {
+      // Dashboard routes
+      case '/owner-dashboard':
+        return canAccessOwnerDashboard;
+      case '/manager-dashboard':
+        return canAccessManagerDashboard;
+      case '/staff-dashboard':
+        return canAccessStaffDashboard;
+      case '/employee-dashboard':
+        return canAccessEmployeeDashboard;
+
+      // Order management
+      case '/orders':
+        return hasPermission(Permission.viewOrders);
+      case '/orders/create':
+        return hasPermission(Permission.createOrders);
+
+      // Employee management
+      case '/employees':
+        return hasPermission(Permission.viewEmployees);
+      case '/employees/add':
+        return hasPermission(Permission.addEmployees);
+      case '/attendance':
+        return hasPermission(Permission.viewAttendance);
+
+      // Stock management
+      case '/stock':
+        return hasPermission(Permission.viewStock);
+      case '/stock/transfer':
+        return hasPermission(Permission.transferStock);
+      case '/stock/adjustment':
+        return hasPermission(Permission.adjustStock);
+
+      // Production management
+      case '/production':
+        return hasPermission(Permission.viewProduction);
+      case '/production/orders':
+        return hasPermission(Permission.createProductionOrders);
+      case '/materials':
+        return hasPermission(Permission.viewMaterials);
+
+      // Financial management
+      case '/finance':
+        return hasPermission(Permission.viewFinance);
+      case '/finance/due-book':
+        return hasPermission(Permission.manageDueBook);
+      case '/finance/expense-book':
+        return hasPermission(Permission.manageExpenseBook);
+      case '/finance/purchase-book':
+        return hasPermission(Permission.managePurchaseBook);
+      case '/finance/sales-book':
+        return hasPermission(Permission.manageSalesBook);
+
+      // Reports
+      case '/reports':
+        return hasPermission(Permission.viewBasicReports);
+      case '/reports/advanced':
+        return hasPermission(Permission.viewAdvancedReports);
+      case '/analytics':
+        return hasPermission(Permission.viewAnalytics);
+
+      // Settings
+      case '/settings':
+        return hasPermission(Permission.manageSettings);
+      case '/settings/users':
+        return hasPermission(Permission.manageUsers);
+      case '/settings/permissions':
+        return hasPermission(Permission.managePermissions);
+
+      // Default - allow basic authenticated routes
+      case '/profile':
+      case '/notifications':
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  // Get allowed navigation items for current role
+  List<String> getAllowedRoutes() {
+    final routes = <String>[];
+
+    // Add dashboard routes
+    if (canAccessOwnerDashboard) routes.add('/owner-dashboard');
+    if (canAccessManagerDashboard) routes.add('/manager-dashboard');
+    if (canAccessStaffDashboard) routes.add('/staff-dashboard');
+    if (canAccessEmployeeDashboard) routes.add('/employee-dashboard');
+
+    // Add feature routes based on permissions
+    if (hasPermission(Permission.viewOrders)) routes.add('/orders');
+    if (hasPermission(Permission.viewEmployees)) routes.add('/employees');
+    if (hasPermission(Permission.viewStock)) routes.add('/stock');
+    if (hasPermission(Permission.viewProduction)) routes.add('/production');
+    if (hasPermission(Permission.viewFinance)) routes.add('/finance');
+    if (hasPermission(Permission.viewBasicReports)) routes.add('/reports');
+    if (hasPermission(Permission.manageSettings)) routes.add('/settings');
+
+    // Always allow profile and notifications
+    routes.addAll(['/profile', '/notifications']);
+
+    return routes;
+  }
+
+  // Get navigation items with role-based filtering
+  List<NavigationItem> getNavigationItems() {
+    final items = <NavigationItem>[];
+
+    // Dashboard item based on highest role permission
+    if (canAccessOwnerDashboard) {
+      items.add(NavigationItem(
+        icon: 'dashboard',
+        label: 'Dashboard',
+        route: '/owner-dashboard',
+      ));
+    } else if (canAccessManagerDashboard) {
+      items.add(NavigationItem(
+        icon: 'dashboard',
+        label: 'Dashboard',
+        route: '/manager-dashboard',
+      ));
+    } else if (canAccessStaffDashboard) {
+      items.add(NavigationItem(
+        icon: 'dashboard',
+        label: 'Tasks',
+        route: '/staff-dashboard',
+      ));
+    } else if (canAccessEmployeeDashboard) {
+      items.add(NavigationItem(
+        icon: 'schedule',
+        label: 'Attendance',
+        route: '/employee-dashboard',
+      ));
+    }
+
+    // Orders
+    if (hasPermission(Permission.viewOrders)) {
+      items.add(NavigationItem(
+        icon: 'assignment',
+        label: 'Orders',
+        route: '/orders',
+      ));
+    }
+
+    // Stock
+    if (hasPermission(Permission.viewStock)) {
+      items.add(NavigationItem(
+        icon: 'inventory',
+        label: 'Stock',
+        route: '/stock',
+      ));
+    }
+
+    // Employees (for managers and owners)
+    if (hasPermission(Permission.viewEmployees)) {
+      items.add(NavigationItem(
+        icon: 'people',
+        label: 'Employees',
+        route: '/employees',
+      ));
+    }
+
+    // Production (for employees and above)
+    if (hasPermission(Permission.viewProduction)) {
+      items.add(NavigationItem(
+        icon: 'factory',
+        label: 'Production',
+        route: '/production',
+      ));
+    }
+
+    // Finance (owners and managers)
+    if (hasPermission(Permission.viewFinance)) {
+      items.add(NavigationItem(
+        icon: 'account_balance',
+        label: 'Finance',
+        route: '/finance',
+      ));
+    }
+
+    // Reports
+    if (hasPermission(Permission.viewBasicReports)) {
+      items.add(NavigationItem(
+        icon: 'bar_chart',
+        label: 'Reports',
+        route: '/reports',
+      ));
+    }
+
+    return items;
+  }
+
+  // Helper methods for role comparisons
+  bool canManageRole(UserRole targetRole) {
+    if (_currentRole == null) return false;
+    return _currentRole!.canAccessRole(targetRole);
+  }
+
+  bool hasHigherRoleThan(UserRole targetRole) {
+    if (_currentRole == null) return false;
+    return _currentRole!.hasHigherPrivilegesThan(targetRole);
+  }
+
+  void reset() {
+    _currentRole = null;
+    _permissions.clear();
+    _isLoading = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
+  void _setError(String error) {
+    _errorMessage = error;
+    notifyListeners();
+  }
+
+  void _clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _clearError();
+  }
+}
+
+class NavigationItem {
+  final String icon;
+  final String label;
+  final String route;
+  final int? badgeCount;
+
+  NavigationItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+    this.badgeCount,
+  });
+}

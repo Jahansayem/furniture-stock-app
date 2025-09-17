@@ -39,6 +39,10 @@ class Environment {
         return const String.fromEnvironment('SUPABASE_ANON_KEY');
       case 'ONESIGNAL_APP_ID':
         return const String.fromEnvironment('ONESIGNAL_APP_ID');
+      case 'SMS_API_KEY':
+        return const String.fromEnvironment('SMS_API_KEY');
+      case 'SMS_SENDER_ID':
+        return const String.fromEnvironment('SMS_SENDER_ID');
       default:
         return '';
     }
@@ -70,6 +74,10 @@ class Environment {
         return 'https://rcfhwkiusmupbasprqjr.supabase.co';
       case 'SUPABASE_ANON_KEY':
         return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjZmh3a2l1c211cGJhc3BycWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQxNTczMTgsImV4cCI6MjA2OTczMzMxOH0.QyBcrMvBvc5E9bkN-oyTT9Uh86zZ-cPKcaUmSg-D_ZU';
+      case 'SMS_API_KEY':
+        return '0PZE9ZsVOBNCjRuT4Ybs';
+      case 'SMS_SENDER_ID':
+        return '8809617611031';
       default:
         return null;
     }
@@ -121,6 +129,16 @@ class Environment {
     return _getEnvVar('ONESIGNAL_APP_ID') ?? '';
   }
   
+  /// Get SMS API key from any available source
+  static String get smsApiKey {
+    return _getEnvVar('SMS_API_KEY') ?? '0PZE9ZsVOBNCjRuT4Ybs';
+  }
+  
+  /// Get SMS sender ID from any available source
+  static String get smsSenderId {
+    return _getEnvVar('SMS_SENDER_ID') ?? 'FurniTrack';
+  }
+  
   /// Check if environment is properly initialized
   static bool get isInitialized => _isInitialized;
   
@@ -130,6 +148,8 @@ class Environment {
       'supabase_url_source': _getConfigSource('SUPABASE_URL'),
       'supabase_key_source': _getConfigSource('SUPABASE_ANON_KEY'),
       'onesignal_source': _getConfigSource('ONESIGNAL_APP_ID'),
+      'sms_api_key_source': _getConfigSource('SMS_API_KEY'),
+      'sms_sender_id_source': _getConfigSource('SMS_SENDER_ID'),
     };
   }
   
@@ -160,6 +180,8 @@ class Environment {
 SUPABASE_URL=$supabaseUrl
 SUPABASE_ANON_KEY=$supabaseAnonKey
 ONESIGNAL_APP_ID=$onesignalAppId
+SMS_API_KEY=$smsApiKey
+SMS_SENDER_ID=$smsSenderId
 
 # Usage: This file is automatically loaded by the app
 # No need for --dart-define flags anymore!

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,8 @@ import 'providers/notification_provider.dart';
 import 'providers/enhanced_notification_provider.dart';
 import 'providers/sales_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/permission_provider.dart';
+// import 'providers/analytics_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -26,22 +29,41 @@ import 'screens/stock/stock_movement_screen.dart';
 import 'screens/sales/create_sale_screen.dart';
 import 'screens/sales/online_cod_order_screen.dart';
 import 'screens/orders/order_management_screen.dart';
+import 'screens/orders2/orders_dashboard_screen.dart';
+import 'screens/orders2/orders_list_screen.dart';
+import 'screens/orders2/orders_analytics_screen.dart';
+import 'screens/orders2/orders_settings_screen.dart';
+import 'screens/orders2/order_details_screen.dart';
 import 'screens/reports/reports_screen.dart';
 import 'screens/reports/location_detail_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/notifications/notification_screen.dart';
 import 'screens/debug/onesignal_test_screen.dart';
 import 'screens/debug/onesignal_diagnostic_screen.dart';
+import 'screens/debug/sms_test_screen.dart';
+import 'screens/debug/steadfast_test_screen.dart';
+// import 'screens/analytics/analytics_dashboard_screen.dart';
+// import 'screens/dashboard/owner_dashboard_screen.dart';
 import 'screens/splash_screen.dart';
 import 'utils/app_theme.dart';
 import 'services/onesignal_service.dart';
 import 'services/offline_storage_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/sync_service.dart';
+// import 'services/alert_service.dart';
 import 'utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Performance optimizations
+  // Disable debug banner in release mode
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
+  // Optimize UI performance for better frame rates
+  // Note: Frame timing monitoring can be added if needed for performance debugging
 
   // Initialize environment configuration first (AI-coding-resistant)
   try {
@@ -91,6 +113,14 @@ void main() async {
     AppLogger.error('Error initializing sync service', error: e);
   }
 
+  // Initialize alert service
+  // try {
+  //   await AlertService().initialize();
+  //   AppLogger.info('Alert service initialized successfully');
+  // } catch (e) {
+  //   AppLogger.error('Error initializing alert service', error: e);
+  // }
+
   runApp(const FurnitureStockApp());
 
   // Initialize OneSignal in background after app starts
@@ -124,32 +154,101 @@ class FurnitureStockApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => EnhancedNotificationProvider()),
         ChangeNotifierProvider(create: (_) => SalesProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => PermissionProvider()),
+        // ChangeNotifierProvider(create: (_) => AnalyticsProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityService()),
         ChangeNotifierProvider(create: (_) => SyncService()),
       ],
-      child: Consumer3<AuthProvider, EnhancedNotificationProvider, ThemeProvider>(
-        builder: (context, authProvider, notificationProvider, themeProvider, _) {
-          // Initialize theme provider on first build
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            themeProvider.initialize();
-          });
-          
-          // Initialize realtime subscriptions when user is authenticated
-          if (authProvider.isAuthenticated) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              notificationProvider.initializeRealtimeSubscription();
-              notificationProvider.subscribeToStockChanges();
-            });
-          }
-
-          return MaterialApp.router(
-            title: 'FurniTrack',
-            theme: themeProvider.themeData,
-            routerConfig: _createRouter(authProvider),
-            debugShowCheckedModeBanner: false,
+      child: Consumer3<AuthProvider, ThemeProvider, EnhancedNotificationProvider>(
+        builder: (context, authProvider, themeProvider, notificationProvider, _) {
+          return _FurnitureStockAppContent(
+            authProvider: authProvider,
+            themeProvider: themeProvider,
+            notificationProvider: notificationProvider,
           );
         },
       ),
+    );
+  }
+}
+
+class _FurnitureStockAppContent extends StatefulWidget {
+  final AuthProvider authProvider;
+  final ThemeProvider themeProvider;
+  final EnhancedNotificationProvider notificationProvider;
+
+  const _FurnitureStockAppContent({
+    required this.authProvider,
+    required this.themeProvider,
+    required this.notificationProvider,
+  });
+
+  @override
+  State<_FurnitureStockAppContent> createState() => _FurnitureStockAppContentState();
+}
+
+class _FurnitureStockAppContentState extends State<_FurnitureStockAppContent> {
+  bool _themeInitialized = false;
+  bool _subscriptionsInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeTheme();
+  }
+
+  void _initializeTheme() {
+    if (!widget.themeProvider.isInitialized && !_themeInitialized) {
+      _themeInitialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.themeProvider.initialize();
+        }
+      });
+    }
+  }
+
+  void _initializeSubscriptions() {
+    if (widget.authProvider.isAuthenticated &&
+        !widget.notificationProvider.isSubscriptionActive &&
+        !_subscriptionsInitialized) {
+      _subscriptionsInitialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.notificationProvider.initializeRealtimeSubscription();
+          widget.notificationProvider.subscribeToStockChanges();
+
+          // Initialize permission provider with user ID
+          final permissionProvider = Provider.of<PermissionProvider>(context, listen: false);
+          if (widget.authProvider.user?.id != null && !permissionProvider.isInitialized) {
+            permissionProvider.initialize(widget.authProvider.user!.id);
+          }
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Check if subscriptions need initialization
+    if (widget.authProvider.isAuthenticated && !_subscriptionsInitialized) {
+      _initializeSubscriptions();
+    }
+
+    return MaterialApp.router(
+      title: 'FurniTrack',
+      theme: widget.themeProvider.themeData,
+      routerConfig: _createRouter(widget.authProvider),
+      debugShowCheckedModeBanner: false,
+      // Performance optimizations
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.noScaling, // Prevent text scaling issues
+          ),
+          child: child!,
+        );
+      },
     );
   }
 
@@ -239,9 +338,40 @@ class FurnitureStockApp extends StatelessWidget {
               builder: (context, state) => const OrderManagementScreen(),
             ),
             GoRoute(
+              path: '/orders2',
+              builder: (context, state) => const OrdersDashboardScreen(),
+            ),
+            GoRoute(
+              path: '/orders2/list',
+              builder: (context, state) => const OrdersListScreen(),
+            ),
+            GoRoute(
+              path: '/orders2/analytics',
+              builder: (context, state) => const OrdersAnalyticsScreen(),
+            ),
+            GoRoute(
+              path: '/orders2/settings',
+              builder: (context, state) => const OrdersSettingsScreen(),
+            ),
+            GoRoute(
+              path: '/orders2/details/:orderId',
+              builder: (context, state) {
+                final orderId = state.pathParameters['orderId']!;
+                return OrderDetailsScreen(orderId: orderId);
+              },
+            ),
+            GoRoute(
               path: '/reports',
               builder: (context, state) => const ReportsScreen(),
             ),
+            // GoRoute(
+            //   path: '/analytics',
+            //   builder: (context, state) => const AnalyticsDashboardScreen(),
+            // ),
+            // GoRoute(
+            //   path: '/dashboard',
+            //   builder: (context, state) => const OwnerDashboardScreen(),
+            // ),
             GoRoute(
               path: '/reports/location',
               builder: (context, state) {
@@ -265,6 +395,14 @@ class FurnitureStockApp extends StatelessWidget {
               path: '/debug/onesignal-diagnostic',
               builder: (context, state) => const OneSignalDiagnosticScreen(),
             ),
+            GoRoute(
+              path: '/debug/sms',
+              builder: (context, state) => const SmsTestScreen(),
+            ),
+            GoRoute(
+              path: '/debug/steadfast',
+              builder: (context, state) => const SteadfastTestScreen(),
+            ),
           ],
         ),
       ],
@@ -283,27 +421,24 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+  String _lastRoute = '';
+  bool _hasInitialized = false;
 
   final List<NavigationItem> _navigationItems = [
     NavigationItem(
+      icon: Icons.list_alt,
+      label: 'Orders',
+      route: '/orders',
+    ),
+    NavigationItem(
       icon: Icons.dashboard,
-      label: 'Dashboard',
-      route: '/home',
+      label: 'Orders2',
+      route: '/orders2',
     ),
     NavigationItem(
       icon: Icons.inventory,
       label: 'Products',
       route: '/products',
-    ),
-    NavigationItem(
-      icon: Icons.store,
-      label: 'Stock',
-      route: '/stock',
-    ),
-    NavigationItem(
-      icon: Icons.list_alt,
-      label: 'Orders',
-      route: '/orders',
     ),
     NavigationItem(
       icon: Icons.analytics,
@@ -313,18 +448,41 @@ class _MainLayoutState extends State<MainLayout> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    // Update selected index based on current route
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final currentRoute = GoRouterState.of(context).matchedLocation;
-      final index =
-          _navigationItems.indexWhere((item) => item.route == currentRoute);
-      if (index != -1 && index != _selectedIndex) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Initialize selected index only once or when route actually changes
+    if (!_hasInitialized) {
+      _updateSelectedIndexFromRoute();
+      _hasInitialized = true;
+    }
+  }
+
+  void _updateSelectedIndexFromRoute() {
+    final currentRoute = GoRouterState.of(context).matchedLocation;
+    
+    // Only update if route actually changed
+    if (currentRoute != _lastRoute) {
+      final index = _navigationItems.indexWhere((item) => item.route == currentRoute);
+      if (index != -1) {
         setState(() {
           _selectedIndex = index;
+          _lastRoute = currentRoute;
         });
       }
-    });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Optimize: Only check route on first build or when necessary
+    if (!_hasInitialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _updateSelectedIndexFromRoute();
+        }
+      });
+    }
 
     return PopScope(
       canPop: false,
@@ -338,6 +496,7 @@ class _MainLayoutState extends State<MainLayout> {
           context.go('/home');
           setState(() {
             _selectedIndex = 0; // Dashboard index
+            _lastRoute = '/home';
           });
         } else {
           // If on home screen, allow app to exit by calling SystemNavigator.pop()
@@ -347,23 +506,51 @@ class _MainLayoutState extends State<MainLayout> {
       },
       child: Scaffold(
         body: widget.child,
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-            context.go(_navigationItems[index].route);
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Theme.of(context).primaryColor,
-          unselectedItemColor: Colors.grey,
-          items: _navigationItems.map((item) {
-            return BottomNavigationBarItem(
-              icon: Icon(item.icon),
-              label: item.label,
-            );
-          }).toList(),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              final targetRoute = _navigationItems[index].route;
+              setState(() {
+                _selectedIndex = index;
+                _lastRoute = targetRoute;
+              });
+              context.go(targetRoute);
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: AppTheme.primaryBlue,
+            unselectedItemColor: AppTheme.mediumGrey,
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+            items: _navigationItems.map((item) {
+              return BottomNavigationBarItem(
+                icon: Icon(item.icon, size: 24),
+                activeIcon: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(item.icon, size: 24),
+                ),
+                label: item.label,
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

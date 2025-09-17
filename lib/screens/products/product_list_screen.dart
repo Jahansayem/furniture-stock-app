@@ -37,7 +37,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundGrey,
+      backgroundColor: AppTheme.lightBlue,
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
@@ -63,13 +63,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   Icon(
                     Icons.error_outline,
                     size: 64,
-                    color: Colors.red[400],
+                    color: AppTheme.primaryBlue,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading products',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.red[600],
+                          color: AppTheme.primaryBlue,
                         ),
                   ),
                   const SizedBox(height: 8),
@@ -98,7 +98,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   Icon(
                     Icons.inventory_2,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppTheme.primaryBlue,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -165,7 +165,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         });
                       },
                       backgroundColor: _filter == 'low_stock'
-                          ? Colors.orange.shade100
+                          ? AppTheme.lightBlue
                           : null,
                     ),
                   ],
@@ -186,7 +186,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     ? Icons.warning
                                     : Icons.inventory_2,
                                 size: 64,
-                                color: Colors.grey[400],
+                                color: AppTheme.primaryBlue,
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -267,13 +267,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           ),
                           errorWidget: (context, url, error) => Icon(
                             Icons.image_not_supported,
-                            color: Colors.grey[400],
+                            color: AppTheme.primaryBlue,
                           ),
                         ),
                       )
                     : Icon(
                         Icons.inventory_2,
-                        color: AppTheme.primaryOrange,
+                        color: AppTheme.primaryBlue,
                         size: 30,
                       ),
               ),
@@ -288,7 +288,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     Text(
                       product.productName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppTheme.darkOrange,
+                            color: AppTheme.darkBlue,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -296,7 +296,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     Text(
                       product.productType,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.primaryOrange,
+                            color: AppTheme.primaryBlue,
                           ),
                     ),
                     if (product.description != null) ...[
@@ -316,14 +316,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         Icon(
                           Icons.warning_amber,
                           size: 16,
-                          color: Colors.orange,
+                          color: AppTheme.secondaryBlue,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Low stock: ${product.lowStockThreshold}',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.orange,
+                                    color: AppTheme.secondaryBlue,
                                   ),
                         ),
                       ],
@@ -359,9 +359,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, size: 20, color: Colors.red),
+                        Icon(Icons.delete, size: 20, color: AppTheme.primaryBlue),
                         SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
+                        Text('Delete', style: TextStyle(color: AppTheme.primaryBlue)),
                       ],
                     ),
                   ),
@@ -422,7 +422,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               color: AppTheme.surfaceGrey,
                               child: Icon(
                                 Icons.image_not_supported,
-                                color: Colors.grey[400],
+                                color: AppTheme.primaryBlue,
                                 size: 50,
                               ),
                             ),
@@ -435,7 +435,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       product.productName,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: AppTheme.darkOrange,
+                                color: AppTheme.darkBlue,
                                 fontWeight: FontWeight.bold,
                               ),
                     ),
@@ -444,13 +444,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryOrange.withAlpha(25),
+                        color: AppTheme.lightBlue,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         product.productType,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.primaryOrange,
+                              color: AppTheme.primaryBlue,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
@@ -461,7 +461,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         'Description',
                         style:
                             Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AppTheme.darkOrange,
+                                  color: AppTheme.darkBlue,
                                   fontWeight: FontWeight.w600,
                                 ),
                       ),
@@ -478,7 +478,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       children: [
                         Icon(
                           Icons.warning_amber,
-                          color: AppColors.warning,
+                          color: AppTheme.secondaryBlue,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -486,7 +486,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           'Low Stock Threshold: ${product.lowStockThreshold}',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.warning,
+                                    color: AppTheme.secondaryBlue,
                                     fontWeight: FontWeight.w600,
                                   ),
                         ),
@@ -522,7 +522,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             icon: const Icon(Icons.delete),
                             label: const Text('Delete'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red[600],
+                              backgroundColor: AppTheme.primaryBlue,
                               foregroundColor: Colors.white,
                             ),
                           ),
@@ -570,7 +570,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
+              backgroundColor: AppTheme.primaryBlue,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),

@@ -53,5 +53,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to the microphone to send voice messages.</string>
 </dict>
 </plist>

@@ -53,7 +53,9 @@
       "Read(/C:\\Users\\Tipu Ahmed\\Downloads\\Furnitruck\\furniture-stock-app\\lib\\screens\\sales/**)",
       "Read(/C:\\Users\\Tipu Ahmed\\Downloads\\Furnitruck\\furniture-stock-app\\lib\\providers/**)",
       "Read(/C:\\Users\\Tipu Ahmed\\Downloads\\Furnitruck\\furniture-stock-app\\lib\\screens\\sales/**)",
-      "Read(/C:\\Users\\Tipu Ahmed\\Downloads\\Furnitruck\\furniture-stock-app\\lib\\config/**)"
+      "Read(/C:\\Users\\Tipu Ahmed\\Downloads\\Furnitruck\\furniture-stock-app\\lib\\config/**)",
+      "mcp__figma-dev-mode-mcp-server__get_code",
+      "mcp__figma-dev-mode-mcp-server__get_screenshot"
     ],
     "deny": [],
     "ask": []

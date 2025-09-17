@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
 import '../models/user_profile.dart';
+import '../models/user_role.dart';
 import '../utils/logger.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -16,11 +17,13 @@ class AuthProvider extends ChangeNotifier {
 
   User? _user;
   UserProfile? _userProfile;
+  UserRole? _userRole;
   bool _isLoading = true; // Start with loading true
   String? _errorMessage;
 
   User? get user => _user;
   UserProfile? get userProfile => _userProfile;
+  UserRole? get userRole => _userRole;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
@@ -50,6 +53,7 @@ class AuthProvider extends ChangeNotifier {
             });
           } else {
             _userProfile = null;
+            _userRole = null;
           }
           notifyListeners();
         }
@@ -66,11 +70,21 @@ class AuthProvider extends ChangeNotifier {
     try {
       final response = await _supabase
           .from(SupabaseConfig.profilesTable)
-          .select()
+          .select('''
+            *, 
+            user_roles(*)
+          ''')
           .eq('id', _user!.id)
           .single();
 
       _userProfile = UserProfile.fromJson(response);
+      
+      // Load user role if available
+      if (response['user_roles'] != null) {
+        _userRole = UserRole.fromJson(response['user_roles'] as Map<String, dynamic>);
+        AppLogger.info('User role loaded: ${_userRole?.displayName}');
+      }
+      
       notifyListeners();
     } catch (e) {
       AppLogger.error('Error loading user profile', error: e);
@@ -85,12 +99,20 @@ class AuthProvider extends ChangeNotifier {
     if (_user == null) return;
 
     try {
+      // Get default role (employee) - later can be changed by admin
+      final roleResponse = await _supabase
+          .from('user_roles')
+          .select('id')
+          .eq('role_name', 'employee')
+          .single();
+
       final profileData = {
         'id': _user!.id,
         'email': _user!.email!,
         'full_name':
             _user!.userMetadata?['full_name'] ?? _user!.email!.split('@')[0],
-        'role': _user!.userMetadata?['role'] ?? 'staff',
+        'role': _user!.userMetadata?['role'] ?? 'staff', // Legacy field
+        'role_id': roleResponse['id'],
         'is_checked_in': false,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -98,7 +120,7 @@ class AuthProvider extends ChangeNotifier {
 
       await _supabase.from(SupabaseConfig.profilesTable).insert(profileData);
 
-      // Load the profile after creating it
+      // Profile and role will be loaded in _loadUserProfile
       await _loadUserProfile();
     } catch (e) {
       AppLogger.error('Error creating user profile', error: e);

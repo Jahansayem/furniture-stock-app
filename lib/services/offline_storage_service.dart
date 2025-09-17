@@ -27,6 +27,8 @@ class OfflineStorageService {
     try {
       await Hive.initFlutter();
 
+      // Chat features have been removed
+
       // Open all boxes
       _productsHiveBox = await Hive.openBox(_productsBox);
       _stocksHiveBox = await Hive.openBox(_stocksBox);
@@ -44,179 +46,224 @@ class OfflineStorageService {
     }
   }
 
-  static bool get isInitialized => _isInitialized;
-
   // Products offline storage
   static Future<void> storeProducts(List<Map<String, dynamic>> products) async {
-    await _productsHiveBox.put('products', products);
+    try {
+      await _productsHiveBox.clear();
+      for (int i = 0; i < products.length; i++) {
+        await _productsHiveBox.put(products[i]['id'], products[i]);
+      }
+      AppLogger.info('Stored ${products.length} products offline');
+    } catch (e) {
+      AppLogger.error('Error storing products offline', error: e);
+      throw e;
+    }
   }
 
-  static List<Map<String, dynamic>> getStoredProducts() {
-    final products = _productsHiveBox
-        .get('products', defaultValue: <Map<String, dynamic>>[]);
-    return List<Map<String, dynamic>>.from(products);
+  static List<Map<String, dynamic>> getProducts() {
+    try {
+      return _productsHiveBox.values.cast<Map<String, dynamic>>().toList();
+    } catch (e) {
+      AppLogger.error('Error getting products from offline storage', error: e);
+      return [];
+    }
+  }
+
+  static Future<void> storeProduct(Map<String, dynamic> product) async {
+    try {
+      await _productsHiveBox.put(product['id'], product);
+      AppLogger.debug('Stored product ${product['id']} offline');
+    } catch (e) {
+      AppLogger.error('Error storing product offline', error: e);
+      throw e;
+    }
   }
 
   // Stocks offline storage
   static Future<void> storeStocks(List<Map<String, dynamic>> stocks) async {
-    await _stocksHiveBox.put('stocks', stocks);
+    try {
+      await _stocksHiveBox.clear();
+      for (int i = 0; i < stocks.length; i++) {
+        await _stocksHiveBox.put(stocks[i]['id'], stocks[i]);
+      }
+      AppLogger.info('Stored ${stocks.length} stocks offline');
+    } catch (e) {
+      AppLogger.error('Error storing stocks offline', error: e);
+      throw e;
+    }
   }
 
-  static List<Map<String, dynamic>> getStoredStocks() {
-    final stocks =
-        _stocksHiveBox.get('stocks', defaultValue: <Map<String, dynamic>>[]);
-    return List<Map<String, dynamic>>.from(stocks);
+  static List<Map<String, dynamic>> getStocks() {
+    try {
+      return _stocksHiveBox.values.cast<Map<String, dynamic>>().toList();
+    } catch (e) {
+      AppLogger.error('Error getting stocks from offline storage', error: e);
+      return [];
+    }
+  }
+
+  static Future<void> storeStock(Map<String, dynamic> stock) async {
+    try {
+      await _stocksHiveBox.put(stock['id'], stock);
+      AppLogger.debug('Stored stock ${stock['id']} offline');
+    } catch (e) {
+      AppLogger.error('Error storing stock offline', error: e);
+      throw e;
+    }
   }
 
   // Sales offline storage
   static Future<void> storeSales(List<Map<String, dynamic>> sales) async {
-    await _salesHiveBox.put('sales', sales);
+    try {
+      await _salesHiveBox.clear();
+      for (int i = 0; i < sales.length; i++) {
+        await _salesHiveBox.put(sales[i]['id'], sales[i]);
+      }
+      AppLogger.info('Stored ${sales.length} sales offline');
+    } catch (e) {
+      AppLogger.error('Error storing sales offline', error: e);
+      throw e;
+    }
   }
 
-  static List<Map<String, dynamic>> getStoredSales() {
-    final sales =
-        _salesHiveBox.get('sales', defaultValue: <Map<String, dynamic>>[]);
-    return List<Map<String, dynamic>>.from(sales);
+  static List<Map<String, dynamic>> getSales() {
+    try {
+      return _salesHiveBox.values.cast<Map<String, dynamic>>().toList();
+    } catch (e) {
+      AppLogger.error('Error getting sales from offline storage', error: e);
+      return [];
+    }
+  }
+
+  static Future<void> storeSale(Map<String, dynamic> sale) async {
+    try {
+      await _salesHiveBox.put(sale['id'], sale);
+      AppLogger.debug('Stored sale ${sale['id']} offline');
+    } catch (e) {
+      AppLogger.error('Error storing sale offline', error: e);
+      throw e;
+    }
   }
 
   // Stock movements offline storage
-  static Future<void> storeMovements(
-      List<Map<String, dynamic>> movements) async {
-    await _movementsHiveBox.put('movements', movements);
+  static Future<void> storeMovements(List<Map<String, dynamic>> movements) async {
+    try {
+      await _movementsHiveBox.clear();
+      for (int i = 0; i < movements.length; i++) {
+        await _movementsHiveBox.put(movements[i]['id'], movements[i]);
+      }
+      AppLogger.info('Stored ${movements.length} movements offline');
+    } catch (e) {
+      AppLogger.error('Error storing movements offline', error: e);
+      throw e;
+    }
   }
 
-  static List<Map<String, dynamic>> getStoredMovements() {
-    final movements = _movementsHiveBox
-        .get('movements', defaultValue: <Map<String, dynamic>>[]);
-    return List<Map<String, dynamic>>.from(movements);
+  static List<Map<String, dynamic>> getMovements() {
+    try {
+      return _movementsHiveBox.values.cast<Map<String, dynamic>>().toList();
+    } catch (e) {
+      AppLogger.error('Error getting movements from offline storage', error: e);
+      return [];
+    }
+  }
+
+  static Future<void> storeMovement(Map<String, dynamic> movement) async {
+    try {
+      await _movementsHiveBox.put(movement['id'], movement);
+      AppLogger.debug('Stored movement ${movement['id']} offline');
+    } catch (e) {
+      AppLogger.error('Error storing movement offline', error: e);
+      throw e;
+    }
   }
 
   // Notifications offline storage
-  static Future<void> storeNotifications(
-      List<Map<String, dynamic>> notifications) async {
-    await _notificationsHiveBox.put('notifications', notifications);
+  static Future<void> storeNotifications(List<Map<String, dynamic>> notifications) async {
+    try {
+      await _notificationsHiveBox.clear();
+      for (int i = 0; i < notifications.length; i++) {
+        await _notificationsHiveBox.put(notifications[i]['id'], notifications[i]);
+      }
+      AppLogger.info('Stored ${notifications.length} notifications offline');
+    } catch (e) {
+      AppLogger.error('Error storing notifications offline', error: e);
+      throw e;
+    }
   }
 
-  static List<Map<String, dynamic>> getStoredNotifications() {
-    final notifications = _notificationsHiveBox
-        .get('notifications', defaultValue: <Map<String, dynamic>>[]);
-    return List<Map<String, dynamic>>.from(notifications);
+  static List<Map<String, dynamic>> getNotifications() {
+    try {
+      return _notificationsHiveBox.values.cast<Map<String, dynamic>>().toList();
+    } catch (e) {
+      AppLogger.error('Error getting notifications from offline storage', error: e);
+      return [];
+    }
   }
 
-  // User profile offline storage
-  static Future<void> storeUserProfile(Map<String, dynamic> profile) async {
-    await _userProfileHiveBox.put('profile', profile);
-  }
-
-  static Map<String, dynamic>? getStoredUserProfile() {
-    final profile = _userProfileHiveBox.get('profile');
-    return profile != null ? Map<String, dynamic>.from(profile) : null;
+  static Future<void> storeNotification(Map<String, dynamic> notification) async {
+    try {
+      await _notificationsHiveBox.put(notification['id'], notification);
+      AppLogger.debug('Stored notification ${notification['id']} offline');
+    } catch (e) {
+      AppLogger.error('Error storing notification offline', error: e);
+      throw e;
+    }
   }
 
   // Pending actions for sync when online
   static Future<void> addPendingAction(Map<String, dynamic> action) async {
-    final actions = getPendingActions();
-    actions.add({
-      ...action,
-      'timestamp': DateTime.now().toIso8601String(),
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-    });
-    await _pendingActionsHiveBox.put('actions', actions);
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      await _pendingActionsHiveBox.put(timestamp, action);
+      AppLogger.debug('Added pending action: ${action['type']}');
+    } catch (e) {
+      AppLogger.error('Error adding pending action', error: e);
+      throw e;
+    }
   }
 
   static List<Map<String, dynamic>> getPendingActions() {
-    final actions = _pendingActionsHiveBox
-        .get('actions', defaultValue: <Map<String, dynamic>>[]);
-    return List<Map<String, dynamic>>.from(actions);
-  }
-
-  static Future<void> removePendingAction(String actionId) async {
-    final actions = getPendingActions();
-    actions.removeWhere((action) => action['id'] == actionId);
-    await _pendingActionsHiveBox.put('actions', actions);
+    try {
+      return _pendingActionsHiveBox.values.cast<Map<String, dynamic>>().toList();
+    } catch (e) {
+      AppLogger.error('Error getting pending actions', error: e);
+      return [];
+    }
   }
 
   static Future<void> clearPendingActions() async {
-    await _pendingActionsHiveBox.clear();
-  }
-
-  // Generic storage methods
-  static Future<void> storeData(
-      String boxName, String key, dynamic data) async {
-    Box box;
-    switch (boxName) {
-      case _productsBox:
-        box = _productsHiveBox;
-        break;
-      case _stocksBox:
-        box = _stocksHiveBox;
-        break;
-      case _salesBox:
-        box = _salesHiveBox;
-        break;
-      case _movementsBox:
-        box = _movementsHiveBox;
-        break;
-      case _notificationsBox:
-        box = _notificationsHiveBox;
-        break;
-      case _pendingActionsBox:
-        box = _pendingActionsHiveBox;
-        break;
-      case _userProfileBox:
-        box = _userProfileHiveBox;
-        break;
-      default:
-        throw Exception('Unknown box name: $boxName');
+    try {
+      await _pendingActionsHiveBox.clear();
+      AppLogger.info('Cleared all pending actions');
+    } catch (e) {
+      AppLogger.error('Error clearing pending actions', error: e);
+      throw e;
     }
-    await box.put(key, data);
   }
 
-  static dynamic getData(String boxName, String key, {dynamic defaultValue}) {
-    Box box;
-    switch (boxName) {
-      case _productsBox:
-        box = _productsHiveBox;
-        break;
-      case _stocksBox:
-        box = _stocksHiveBox;
-        break;
-      case _salesBox:
-        box = _salesHiveBox;
-        break;
-      case _movementsBox:
-        box = _movementsHiveBox;
-        break;
-      case _notificationsBox:
-        box = _notificationsHiveBox;
-        break;
-      case _pendingActionsBox:
-        box = _pendingActionsHiveBox;
-        break;
-      case _userProfileBox:
-        box = _userProfileHiveBox;
-        break;
-      default:
-        throw Exception('Unknown box name: $boxName');
+  // User profile offline storage
+  static Future<void> storeUserProfile(Map<String, dynamic> profile) async {
+    try {
+      await _userProfileHiveBox.put('current_user', profile);
+      AppLogger.debug('Stored user profile offline');
+    } catch (e) {
+      AppLogger.error('Error storing user profile offline', error: e);
+      throw e;
     }
-    return box.get(key, defaultValue: defaultValue);
   }
 
-  // Clear all offline data
-  static Future<void> clearAllData() async {
-    await Future.wait([
-      _productsHiveBox.clear(),
-      _stocksHiveBox.clear(),
-      _salesHiveBox.clear(),
-      _movementsHiveBox.clear(),
-      _notificationsHiveBox.clear(),
-      _userProfileHiveBox.clear(),
-      // Don't clear pending actions as they need to be synced
-    ]);
+  static Map<String, dynamic>? getUserProfile() {
+    try {
+      return _userProfileHiveBox.get('current_user');
+    } catch (e) {
+      AppLogger.error('Error getting user profile from offline storage', error: e);
+      return null;
+    }
   }
 
-  // Get storage info
-  static Map<String, int> getStorageInfo() {
+  // Get storage statistics
+  static Map<String, int> getStorageStats() {
     return {
       'products': _productsHiveBox.length,
       'stocks': _stocksHiveBox.length,
@@ -225,6 +272,34 @@ class OfflineStorageService {
       'notifications': _notificationsHiveBox.length,
       'pendingActions': _pendingActionsHiveBox.length,
       'userProfile': _userProfileHiveBox.length,
+    };
+  }
+
+  // Chat features have been removed from the application
+
+  // Legacy method names for compatibility
+  static List<Map<String, dynamic>> getStoredProducts() {
+    return getProducts();
+  }
+
+  static List<Map<String, dynamic>> getStoredMovements() {
+    return getMovements();
+  }
+
+  static Future<void> removePendingAction(String timestamp) async {
+    try {
+      await _pendingActionsHiveBox.delete(timestamp);
+      AppLogger.debug('Removed pending action: $timestamp');
+    } catch (e) {
+      AppLogger.error('Error removing pending action', error: e);
+      throw e;
+    }
+  }
+
+  static Map<String, dynamic> getStorageInfo() {
+    return {
+      'isInitialized': _isInitialized,
+      'stats': getStorageStats(),
     };
   }
 
@@ -242,5 +317,3 @@ class OfflineStorageService {
     _isInitialized = false;
   }
 }
-
-

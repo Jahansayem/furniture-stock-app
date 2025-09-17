@@ -97,12 +97,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryOrange.withAlpha(25),
+                        color: Theme.of(context).primaryColor.withAlpha(25),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.edit,
-                        color: AppTheme.primaryOrange,
+                        color: Theme.of(context).primaryColor,
                         size: 24,
                       ),
                     ),
@@ -117,7 +117,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(
-                                  color: AppTheme.darkOrange,
+                                  color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),

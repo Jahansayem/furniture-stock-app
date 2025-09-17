@@ -11,8 +11,10 @@ enum AppThemeMode {
 class ThemeProvider extends ChangeNotifier {
   static const String _themePrefsKey = 'selected_theme';
   AppThemeMode _currentTheme = AppThemeMode.blue; // Default to blue theme
+  bool _isInitialized = false;
   
   AppThemeMode get currentTheme => _currentTheme;
+  bool get isInitialized => _isInitialized;
   
   ThemeData get themeData {
     switch (_currentTheme) {
@@ -49,6 +51,8 @@ class ThemeProvider extends ChangeNotifier {
   
   /// Initialize theme provider and load saved preference
   Future<void> initialize() async {
+    if (_isInitialized) return;
+    
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedTheme = prefs.getString(_themePrefsKey);
@@ -64,6 +68,8 @@ class ThemeProvider extends ChangeNotifier {
       // If preferences fail, use default theme
       _currentTheme = AppThemeMode.blue;
     }
+    
+    _isInitialized = true;
   }
   
   /// Change theme and persist to preferences

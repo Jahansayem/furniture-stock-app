@@ -74,11 +74,13 @@ class EnhancedNotificationProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   RealtimeChannel? _notificationChannel;
+  bool _isSubscriptionActive = false;
 
   List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
+  bool get isSubscriptionActive => _isSubscriptionActive;
 
   Future<void> fetchNotifications() async {
     final user = _supabase.auth.currentUser;
@@ -194,6 +196,8 @@ class EnhancedNotificationProvider extends ChangeNotifier {
 
   // Initialize realtime subscription for notifications
   Future<void> initializeRealtimeSubscription() async {
+    if (_isSubscriptionActive) return; // Prevent duplicate subscriptions
+    
     final user = _supabase.auth.currentUser;
     if (user == null) {
       AppLogger.warning('No authenticated user - cannot subscribe to notifications');
@@ -251,9 +255,11 @@ class EnhancedNotificationProvider extends ChangeNotifier {
           )
           .subscribe();
 
+      _isSubscriptionActive = true;
       AppLogger.info('Realtime subscription for notifications initialized');
     } catch (e) {
       AppLogger.error('Error initializing realtime subscription', error: e);
+      _isSubscriptionActive = false;
     }
   }
 
@@ -359,6 +365,7 @@ class EnhancedNotificationProvider extends ChangeNotifier {
   @override
   void dispose() {
     _notificationChannel?.unsubscribe();
+    _isSubscriptionActive = false;
     super.dispose();
   }
 }

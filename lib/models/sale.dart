@@ -34,6 +34,9 @@ class Sale {
   final double? saleLatitude; // GPS coordinates of sale
   final double? saleLongitude; // GPS coordinates of sale
   final String? saleAddress; // Address where sale was made
+  final double? discount; // Discount amount applied
+  final String? paymentStatus; // Payment status
+  final DateTime? paymentDate; // When payment was made
 
   Sale({
     required this.id,
@@ -70,6 +73,9 @@ class Sale {
     this.saleLatitude,
     this.saleLongitude,
     this.saleAddress,
+    this.discount,
+    this.paymentStatus,
+    this.paymentDate,
   });
 
   factory Sale.fromJson(Map<String, dynamic> json) {
@@ -114,6 +120,11 @@ class Sale {
       saleLatitude: json['sale_latitude']?.toDouble(),
       saleLongitude: json['sale_longitude']?.toDouble(),
       saleAddress: json['sale_address'],
+      discount: json['discount']?.toDouble(),
+      paymentStatus: json['payment_status'],
+      paymentDate: json['payment_date'] != null
+          ? DateTime.parse(json['payment_date'])
+          : null,
     );
   }
 
@@ -152,6 +163,9 @@ class Sale {
       'sale_latitude': saleLatitude,
       'sale_longitude': saleLongitude,
       'sale_address': saleAddress,
+      'discount': discount,
+      'payment_status': paymentStatus,
+      'payment_date': paymentDate?.toIso8601String(),
     };
   }
 

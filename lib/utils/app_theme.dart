@@ -8,12 +8,14 @@ class AppTheme {
   static const Color darkOrange = Color(0xFFD73527);
   static const Color accentRed = Color(0xFFFF424F);
   
-  // Professional Blue Theme color palette
-  static const Color primaryBlue = Color(0xFF1565C0);
-  static const Color secondaryBlue = Color(0xFF2196F3);
-  static const Color lightBlue = Color(0xFFE3F2FD);
-  static const Color darkBlue = Color(0xFF0D47A1);
-  static const Color accentBlue = Color(0xFF03DAC6);
+  // Modern Professional Blue Theme color palette - Figma inspired
+  static const Color primaryBlue = Color(0xFF2563EB);  // Modern blue-600
+  static const Color secondaryBlue = Color(0xFF3B82F6); // Blue-500
+  static const Color lightBlue = Color(0xFFEFF6FF);     // Blue-50
+  static const Color darkBlue = Color(0xFF1E40AF);      // Blue-700
+  static const Color accentBlue = Color(0xFF0EA5E9);    // Sky-500
+  static const Color gradientStart = Color(0xFF3B82F6);
+  static const Color gradientEnd = Color(0xFF2563EB);
   
   // Neutral colors from Figma
   static const Color backgroundGrey = Color(0xFFF8F8F8);
@@ -226,9 +228,9 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primaryOrange.withOpacity(0.5);
+            return primaryOrange.withValues(alpha: 0.5);
           }
-          return lightGrey.withOpacity(0.3);
+          return lightGrey.withValues(alpha: 0.3);
         }),
       ),
 
@@ -484,53 +486,49 @@ class AppTheme {
         ),
       ),
 
-      // Card Theme - Professional style
+      // Card Theme - Modern elevated style
       cardTheme: CardThemeData(
         color: white,
-        elevation: 0,
-        shadowColor: Colors.transparent,
+        elevation: 2,
+        shadowColor: primaryBlue.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(
-            color: cardBorder,
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(12),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
 
-      // Elevated Button Theme - Primary blue button
+      // Elevated Button Theme - Modern gradient button
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryBlue,
           foregroundColor: white,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          elevation: 3,
+          shadowColor: primaryBlue.withValues(alpha: 0.3),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
 
-      // Outlined Button Theme - Secondary actions
+      // Outlined Button Theme - Modern outline style
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryBlue,
-          side: const BorderSide(color: primaryBlue, width: 1),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          side: const BorderSide(color: primaryBlue, width: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -626,9 +624,9 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primaryBlue.withOpacity(0.5);
+            return primaryBlue.withValues(alpha: 0.5);
           }
-          return lightGrey.withOpacity(0.3);
+          return lightGrey.withValues(alpha: 0.3);
         }),
       ),
 

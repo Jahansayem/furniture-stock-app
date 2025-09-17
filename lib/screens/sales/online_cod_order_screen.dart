@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../constants/onesignal_config.dart';
 import '../../services/onesignal_service.dart';
 import '../../providers/product_provider.dart';
@@ -22,15 +24,12 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
   final _unitPriceController = TextEditingController();
   final _codAmountController = TextEditingController();
   final _specialInstructionsController = TextEditingController();
+  
 
   String? _selectedProductId;
   String? _selectedLocationId;
   String _deliveryType = 'home_delivery';
   double _totalAmount = 0.0;
-  
-  // Track created order for Send to Steadfast
-  String? _createdOrderId;
-  bool _showSendToCourier = false;
 
   @override
   void initState() {
@@ -76,13 +75,14 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
   void _calculateTotal() {
     if (_unitPriceController.text.isNotEmpty && 
         _quantityController.text.isNotEmpty) {
-      try {
-        final unitPrice = double.parse(_unitPriceController.text);
-        final quantity = int.parse(_quantityController.text);
+      final unitPrice = double.tryParse(_unitPriceController.text);
+      final quantity = int.tryParse(_quantityController.text);
+      
+      if (unitPrice != null && quantity != null && unitPrice > 0 && quantity > 0) {
         _totalAmount = unitPrice * quantity;
         _codAmountController.text = _totalAmount.toStringAsFixed(2);
         setState(() {});
-      } catch (e) {
+      } else {
         _totalAmount = 0.0;
         _codAmountController.clear();
         setState(() {});
@@ -102,12 +102,30 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
       return;
     }
 
+    // Additional safety check for parsing
+    final quantity = int.tryParse(_quantityController.text);
+    final unitPrice = double.tryParse(_unitPriceController.text);
+    
+    if (quantity == null || quantity <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid quantity entered'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    
+    if (unitPrice == null || unitPrice <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid unit price entered'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
     final salesProvider = context.read<SalesProvider>();
     final success = await salesProvider.createSale(
       productId: _selectedProductId!,
       locationId: _selectedLocationId!,
-      quantity: int.parse(_quantityController.text),
-      unitPrice: double.parse(_unitPriceController.text),
+      quantity: quantity,
+      unitPrice: unitPrice,
       saleType: 'online_cod',
       customerName: _customerNameController.text,
       customerPhone: _customerPhoneController.text,
@@ -117,43 +135,67 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
       recipientName: _customerNameController.text,
       recipientPhone: _customerPhoneController.text,
       recipientAddress: _customerAddressController.text,
-      codAmount: double.parse(_codAmountController.text),
+      codAmount: double.tryParse(_codAmountController.text) ?? 0.0,
       courierNotes: _specialInstructionsController.text.isEmpty ? null : _specialInstructionsController.text,
     );
+
+    print('🔍 DEBUG: Order creation success: $success');
+    if (salesProvider.errorMessage != null) {
+      print('🔍 DEBUG: Sales provider error: ${salesProvider.errorMessage}');
+    }
 
     if (!mounted) return;
 
     if (success) {
-      final quantity = int.parse(_quantityController.text);
-      final unitPrice = double.parse(_unitPriceController.text);
+      // Capture form data before clearing (use already validated values)
+      final quantity = int.tryParse(_quantityController.text) ?? 0;
+      final unitPrice = double.tryParse(_unitPriceController.text) ?? 0.0;
       final totalAmount = quantity * unitPrice;
       final customerName = _customerNameController.text;
+      final customerPhone = _customerPhoneController.text;
       final product = context
           .read<ProductProvider>()
           .products
           .firstWhere((p) => p.id == _selectedProductId);
       final productName = product.productName;
 
-      await sendOneSignalNotificationToAllUsers(
+      // Show success message first
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('🎉 COD order created successfully!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Clear form immediately after successful order creation
+      _clearForm();
+
+      // Navigate to orders screen immediately
+      print('🔍 DEBUG: About to navigate to /orders, mounted: $mounted');
+      if (mounted) {
+        try {
+          context.go('/orders');
+          print('🔍 DEBUG: Navigation to /orders completed');
+        } catch (e) {
+          print('🔍 DEBUG: Navigation failed: $e');
+        }
+      }
+
+      // Send OneSignal notification to internal users in background
+      sendOneSignalNotificationToAllUsers(
         appId: OneSignalConfig.appId,
         restApiKey: OneSignalConfig.restApiKey,
         title: '🚚 নতুন অনলাইন COD অর্ডার',
         message: '$quantity units of $productName ordered by $customerName for ৳${totalAmount.toStringAsFixed(2)} (COD)',
       );
 
+      // Update stock data in background
       final stockProvider = context.read<StockProvider>();
-      await stockProvider.fetchStocks();
+      stockProvider.fetchStocks();
 
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 Online COD order created successfully! Status: Pending courier pickup'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      _clearForm();
+      // SMS notifications disabled for order creation
+      print('🔍 DEBUG: Order created successfully, SMS notifications disabled');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -181,6 +223,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -193,7 +236,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
             const Text('Online COD Order'),
           ],
         ),
-        backgroundColor: Colors.orange[600],
+        backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         elevation: 2,
       ),
@@ -242,7 +285,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
               children: [
                 // Header Card
                 Card(
-                  color: Colors.orange[50],
+                  color: Colors.blue[50],
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
@@ -250,7 +293,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.orange[600],
+                            color: Colors.blue[600],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -372,6 +415,9 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                                   prefixIcon: Icon(Icons.numbers),
                                 ),
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 onChanged: (_) => _calculateTotal(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -402,7 +448,28 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                                   prefixText: '৳ ',
                                   prefixIcon: Icon(Icons.attach_money),
                                 ),
-                                keyboardType: TextInputType.number,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                  // Prevent multiple decimal points
+                                  TextInputFormatter.withFunction((oldValue, newValue) {
+                                    final text = newValue.text;
+                                    if (text.isEmpty) return newValue;
+                                    
+                                    // Count decimal points
+                                    final decimalCount = text.split('.').length - 1;
+                                    if (decimalCount > 1) {
+                                      return oldValue;
+                                    }
+                                    
+                                    // Validate if it can be parsed as double
+                                    if (double.tryParse(text) == null && text != '.') {
+                                      return oldValue;
+                                    }
+                                    
+                                    return newValue;
+                                  }),
+                                ],
                                 onChanged: (_) => _calculateTotal(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
@@ -540,7 +607,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                               RadioListTile<String>(
                                 title: Row(
                                   children: [
-                                    Icon(Icons.location_city, size: 20, color: Colors.orange[600]),
+                                    Icon(Icons.location_city, size: 20, color: Colors.blue[600]),
                                     const SizedBox(width: 8),
                                     const Text('Point Delivery'),
                                   ],
@@ -578,7 +645,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
 
                 // Payment Summary Card
                 Card(
-                  color: Colors.amber[50],
+                  color: Colors.blue[50],
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -586,7 +653,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.payment, color: Colors.amber[700]),
+                            Icon(Icons.payment, color: Colors.blue[700]),
                             const SizedBox(width: 8),
                             const Text(
                               'Payment Summary',
@@ -636,7 +703,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                               icon: const Icon(Icons.calculate, size: 18),
                               label: const Text('Auto'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange[600],
+                                backgroundColor: Colors.blue[600],
                                 foregroundColor: Colors.white,
                               ),
                             ),
@@ -726,7 +793,7 @@ class _OnlineCodOrderScreenState extends State<OnlineCodOrderScreen> {
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange[600],
+                      backgroundColor: Colors.blue[600],
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
