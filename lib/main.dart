@@ -20,7 +20,6 @@ import 'providers/permission_provider.dart';
 // import 'providers/analytics_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/home/home_screen.dart';
 import 'screens/products/product_list_screen.dart';
 import 'screens/products/add_product_screen.dart';
 import 'screens/products/edit_product_screen.dart';
@@ -269,7 +268,7 @@ class _FurnitureStockAppContentState extends State<_FurnitureStockAppContent> {
 
         // Skip splash screen after initial load
         if (isSplash && !authProvider.isLoading) {
-          return isAuthenticated ? '/home' : '/login';
+          return isAuthenticated ? '/orders' : '/login';
         }
 
         if (!isAuthenticated && !isLoggingIn && !isSplash) {
@@ -277,7 +276,7 @@ class _FurnitureStockAppContentState extends State<_FurnitureStockAppContent> {
         }
 
         if (isAuthenticated && isLoggingIn) {
-          return '/home';
+          return '/orders';
         }
 
         return null;
@@ -298,10 +297,6 @@ class _FurnitureStockAppContentState extends State<_FurnitureStockAppContent> {
         ShellRoute(
           builder: (context, state, child) => MainLayout(child: child),
           routes: [
-            GoRoute(
-              path: '/home',
-              builder: (context, state) => const HomeScreen(),
-            ),
             GoRoute(
               path: '/products',
               builder: (context, state) => const ProductListScreen(),
@@ -450,24 +445,47 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
-    // Initialize selected index only once or when route actually changes
-    if (!_hasInitialized) {
-      _updateSelectedIndexFromRoute();
-      _hasInitialized = true;
-    }
+    _updateSelectedIndexFromRoute();
   }
 
   void _updateSelectedIndexFromRoute() {
     final currentRoute = GoRouterState.of(context).matchedLocation;
-    
-    // Only update if route actually changed
-    if (currentRoute != _lastRoute) {
-      final index = _navigationItems.indexWhere((item) => item.route == currentRoute);
-      if (index != -1) {
+
+    // Handle route-based navigation index calculation
+    int newIndex = _selectedIndex;
+
+    // Find exact match first
+    final exactMatchIndex = _navigationItems.indexWhere((item) => item.route == currentRoute);
+    if (exactMatchIndex != -1) {
+      newIndex = exactMatchIndex;
+    } else {
+      // Handle sub-routes and complex routes
+      if (currentRoute.startsWith('/orders') && !currentRoute.startsWith('/orders2')) {
+        newIndex = 0; // Orders tab
+      } else if (currentRoute.startsWith('/orders2')) {
+        newIndex = 1; // Orders2 tab
+      } else if (currentRoute.startsWith('/products')) {
+        newIndex = 2; // Products tab
+      } else if (currentRoute.startsWith('/reports')) {
+        newIndex = 3; // Reports tab
+      } else if (currentRoute.startsWith('/sales')) {
+        newIndex = 0; // Sales go to Orders tab by default
+      } else if (currentRoute.startsWith('/stock')) {
+        newIndex = 2; // Stock goes to Products tab by default
+      } else if (currentRoute == '/home') {
+        // Redirect legacy /home routes to /orders
+        context.go('/orders');
+        newIndex = 0; // Orders tab
+      }
+    }
+
+    // Only update if the route or index actually changed
+    if (currentRoute != _lastRoute || newIndex != _selectedIndex) {
+      if (mounted) {
         setState(() {
-          _selectedIndex = index;
+          _selectedIndex = newIndex;
           _lastRoute = currentRoute;
+          _hasInitialized = true;
         });
       }
     }
@@ -475,13 +493,9 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    // Optimize: Only check route on first build or when necessary
+    // Ensure route is properly initialized
     if (!_hasInitialized) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _updateSelectedIndexFromRoute();
-        }
-      });
+      _updateSelectedIndexFromRoute();
     }
 
     return PopScope(
@@ -491,15 +505,15 @@ class _MainLayoutState extends State<MainLayout> {
 
         final currentRoute = GoRouterState.of(context).matchedLocation;
 
-        // If not on home screen, navigate to home
-        if (currentRoute != '/home') {
-          context.go('/home');
+        // If not on orders screen, navigate to orders
+        if (currentRoute != '/orders') {
+          context.go('/orders');
           setState(() {
-            _selectedIndex = 0; // Dashboard index
-            _lastRoute = '/home';
+            _selectedIndex = 0; // Orders index
+            _lastRoute = '/orders';
           });
         } else {
-          // If on home screen, allow app to exit by calling SystemNavigator.pop()
+          // If on orders screen, allow app to exit by calling SystemNavigator.pop()
           // This will properly exit the app
           SystemNavigator.pop();
         }
@@ -521,11 +535,14 @@ class _MainLayoutState extends State<MainLayout> {
             currentIndex: _selectedIndex,
             onTap: (index) {
               final targetRoute = _navigationItems[index].route;
-              setState(() {
-                _selectedIndex = index;
-                _lastRoute = targetRoute;
-              });
-              context.go(targetRoute);
+              // Prevent unnecessary updates if already on the same tab
+              if (_selectedIndex != index) {
+                setState(() {
+                  _selectedIndex = index;
+                  _lastRoute = targetRoute;
+                });
+                context.go(targetRoute);
+              }
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.transparent,

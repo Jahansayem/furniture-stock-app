@@ -46,8 +46,8 @@ class AppTheme {
         outline: cardBorder,
       ),
       
-      // Primary font family from Figma
-      fontFamily: 'Poppins',
+      // Primary font family - Tiro Bangla for Bengali support
+      fontFamily: 'Tiro Bangla',
 
       // App Bar Theme - Shopee style
       appBarTheme: const AppBarTheme(
@@ -56,7 +56,7 @@ class AppTheme {
         elevation: 1,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: white,
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -75,12 +75,12 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         unselectedLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
@@ -113,7 +113,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(6),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -130,7 +130,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(6),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -143,7 +143,7 @@ class AppTheme {
           foregroundColor: primaryOrange,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
@@ -172,12 +172,12 @@ class AppTheme {
           borderSide: const BorderSide(color: accentRed, width: 1),
         ),
         labelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 14,
         ),
         hintStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: lightGrey,
           fontSize: 14,
         ),
@@ -196,13 +196,13 @@ class AppTheme {
         backgroundColor: lightOrange,
         selectedColor: primaryOrange,
         labelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: primaryOrange,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         secondaryLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: white,
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -258,75 +258,75 @@ class AppTheme {
       // Text Theme - Poppins font family from Figma
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
         headlineMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 24,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
         headlineSmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         titleLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
         titleSmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         bodyLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 16,
           fontWeight: FontWeight.w400,
         ),
         bodyMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         bodySmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         labelMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         labelSmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 10,
           fontWeight: FontWeight.w400,
@@ -370,7 +370,7 @@ class AppTheme {
         elevation: 1,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: white,
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -387,12 +387,12 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         unselectedLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
@@ -421,7 +421,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(6),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -446,8 +446,8 @@ class AppTheme {
         outline: cardBorder,
       ),
       
-      // Primary font family
-      fontFamily: 'Poppins',
+      // Primary font family - Tiro Bangla for Bengali support
+      fontFamily: 'Tiro Bangla',
 
       // App Bar Theme - Professional Blue style
       appBarTheme: const AppBarTheme(
@@ -456,7 +456,7 @@ class AppTheme {
         elevation: 1,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: white,
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -475,12 +475,12 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         unselectedLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
@@ -509,7 +509,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -526,7 +526,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -539,7 +539,7 @@ class AppTheme {
           foregroundColor: primaryBlue,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            fontFamily: 'Tiro Bangla',
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
@@ -568,12 +568,12 @@ class AppTheme {
           borderSide: const BorderSide(color: accentRed, width: 1),
         ),
         labelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 14,
         ),
         hintStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: lightGrey,
           fontSize: 14,
         ),
@@ -592,13 +592,13 @@ class AppTheme {
         backgroundColor: lightBlue,
         selectedColor: primaryBlue,
         labelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: primaryBlue,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         secondaryLabelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: white,
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -654,75 +654,75 @@ class AppTheme {
       // Text Theme - Same as light theme
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
         headlineMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 24,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
         headlineSmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         titleLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
         titleSmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         bodyLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 16,
           fontWeight: FontWeight.w400,
         ),
         bodyMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         bodySmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: darkGrey,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         labelMedium: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         labelSmall: TextStyle(
-          fontFamily: 'Poppins',
+          fontFamily: 'Tiro Bangla',
           color: mediumGrey,
           fontSize: 10,
           fontWeight: FontWeight.w400,
@@ -796,21 +796,21 @@ class AppColors {
 class AppTextStyles {
   // Product card text styles
   static const TextStyle productTitle = TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Tiro Bangla',
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppTheme.darkGrey,
   );
   
   static const TextStyle productPrice = TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Tiro Bangla',
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppTheme.primaryOrange,
   );
   
   static const TextStyle originalPrice = TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Tiro Bangla',
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.originalPrice,
@@ -819,14 +819,14 @@ class AppTextStyles {
   
   // Button text styles
   static const TextStyle buttonPrimary = TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Tiro Bangla',
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppTheme.white,
   );
   
   static const TextStyle buttonSecondary = TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Tiro Bangla',
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppTheme.primaryOrange,
@@ -834,7 +834,7 @@ class AppTextStyles {
   
   // Category and filter text
   static const TextStyle categoryLabel = TextStyle(
-    fontFamily: 'Poppins',
+    fontFamily: 'Tiro Bangla',
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppTheme.mediumGrey,

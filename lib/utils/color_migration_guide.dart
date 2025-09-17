@@ -40,7 +40,7 @@ AFFECTED FILES:
 ===============
 - lib/screens/auth/login_screen.dart
 - lib/screens/auth/register_screen.dart
-- lib/screens/home/home_screen.dart
+- lib/screens/orders/order_management_screen.dart (replaces home screen)
 - lib/screens/notifications/notification_screen.dart
 - lib/screens/stock/stock_overview_screen.dart
 - And other screen files that reference the old colors

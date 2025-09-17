@@ -344,7 +344,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     AppLogger.debug('Registration success: $success');
 
     if (success && mounted) {
-      context.go('/home');
+      context.go('/orders');
     }
   }
 }

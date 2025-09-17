@@ -3,14 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/sale.dart';
+import '../services/delivery_analytics_service.dart';
 
-class OrderDetailsModal extends StatelessWidget {
+class OrderDetailsModal extends StatefulWidget {
   final Sale order;
 
   const OrderDetailsModal({
     super.key,
     required this.order,
   });
+
+  @override
+  State<OrderDetailsModal> createState() => _OrderDetailsModalState();
 
   static void show(BuildContext context, Sale order) {
     showModalBottomSheet(
@@ -19,6 +23,48 @@ class OrderDetailsModal extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => OrderDetailsModal(order: order),
     );
+  }
+}
+
+class _OrderDetailsModalState extends State<OrderDetailsModal> {
+  final DeliveryAnalyticsService _deliveryAnalytics = DeliveryAnalyticsService();
+  String? _estimatedArrival;
+  Map<String, dynamic>? _deliveryStats;
+  bool _isLoadingEstimate = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeliveryEstimate();
+  }
+
+  Future<void> _loadDeliveryEstimate() async {
+    try {
+      final deliveryAddress = _getDeliveryAddress();
+
+      // Get analytics-based delivery estimate
+      final estimatedDays = await _deliveryAnalytics.getEstimatedDeliveryDays(deliveryAddress);
+      final stats = await _deliveryAnalytics.getAreaDeliveryStats(deliveryAddress);
+
+      final estimatedDate = widget.order.saleDate.add(Duration(days: estimatedDays));
+
+      if (mounted) {
+        setState(() {
+          _estimatedArrival = _formatDate(estimatedDate);
+          _deliveryStats = stats;
+          _isLoadingEstimate = false;
+        });
+      }
+    } catch (e) {
+      // Fallback to default estimate
+      final estimatedDate = widget.order.saleDate.add(const Duration(days: 3));
+      if (mounted) {
+        setState(() {
+          _estimatedArrival = _formatDate(estimatedDate);
+          _isLoadingEstimate = false;
+        });
+      }
+    }
   }
 
   @override
@@ -51,6 +97,8 @@ class OrderDetailsModal extends StatelessWidget {
                     _buildHeader(context),
                     const SizedBox(height: 24),
                     _buildOrderInfo(),
+                    const SizedBox(height: 24),
+                    _buildOrderTimeline(),
                     const SizedBox(height: 24),
                     _buildCustomerOrderSection(),
                     const SizedBox(height: 24),
@@ -99,16 +147,17 @@ class OrderDetailsModal extends StatelessWidget {
   Widget _buildOrderInfo() {
     return Column(
       children: [
-        // Order ID Row
+        // Parcel ID Row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Order ID Section
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Order ID',
+            // Parcel ID Section
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Parcel ID',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -118,16 +167,43 @@ class OrderDetailsModal extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '#${order.id.substring(0, 8).toUpperCase()}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                    height: 1.33, // 24px line height
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      widget.order.consignmentId != null && widget.order.consignmentId!.isNotEmpty
+                        ? '#${widget.order.consignmentId}'
+                        : '#${widget.order.id.substring(0, 8).toUpperCase()}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        height: 1.33, // 24px line height
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _copyToClipboard(
+                        widget.order.consignmentId != null && widget.order.consignmentId!.isNotEmpty
+                          ? widget.order.consignmentId!
+                          : widget.order.id
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(
+                          Icons.copy,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
+              ),
             ),
 
             // Action Buttons
@@ -177,12 +253,6 @@ class OrderDetailsModal extends StatelessWidget {
           'Delivery Status',
           _getDeliveryStatus(),
           _getDeliveryStatusColor(),
-        ),
-        _buildDetailItem(
-          'Payment Status',
-          _getPaymentStatus(),
-          _getPaymentStatusColor(),
-          backgroundColor: _getPaymentStatusBackgroundColor(),
         ),
         _buildUpdatedSection(),
       ],
@@ -250,7 +320,7 @@ class OrderDetailsModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _formatDate(order.saleDate),
+                _formatDate(widget.order.saleDate),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -269,7 +339,7 @@ class OrderDetailsModal extends StatelessWidget {
                 ),
               ),
               Text(
-                _formatTime(order.saleDate),
+                _formatTime(widget.order.saleDate),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -340,7 +410,7 @@ class OrderDetailsModal extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              order.customerName,
+              widget.order.customerName,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -351,7 +421,7 @@ class OrderDetailsModal extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              order.customerPhone ?? '${order.customerName.toLowerCase().replaceAll(' ', '.')}@gmail.com',
+              widget.order.customerPhone ?? '${widget.order.customerName.toLowerCase().replaceAll(' ', '.')}@gmail.com',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -449,7 +519,7 @@ class OrderDetailsModal extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _buildOrderDetailItem('Purchase Date', _formatDate(order.saleDate)),
+              child: _buildOrderDetailItem('Purchase Date', _formatDate(widget.order.saleDate)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -503,7 +573,7 @@ class OrderDetailsModal extends StatelessWidget {
   }
 
   Widget _buildInvoiceIdItem() {
-    final invoiceId = 'RCN-${order.id.substring(0, 4).toUpperCase()}-${DateTime.now().year}';
+    final invoiceId = 'RCN-${widget.order.id.substring(0, 4).toUpperCase()}-${DateTime.now().year}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -572,10 +642,10 @@ class OrderDetailsModal extends StatelessWidget {
     // Dynamic product data from the actual order
     final products = [
       {
-        'name': order.productName,
-        'quantity': order.quantity,
-        'price': order.unitPrice,
-        'total': order.totalAmount,
+        'name': widget.order.productName,
+        'quantity': widget.order.quantity,
+        'price': widget.order.unitPrice,
+        'total': widget.order.totalAmount,
       },
     ];
 
@@ -749,23 +819,21 @@ class OrderDetailsModal extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 
   Widget _buildPaymentSummary() {
-    final subtotal = order.totalAmount; // Dynamic values from actual order
-    final discount = order.discount ?? 0.0;
-    final taxAmount = (subtotal - discount) * 0.10; // 10% tax calculation
-    final totalPayment = subtotal - discount + taxAmount;
+    final subtotal = widget.order.totalAmount; // Dynamic values from actual order
+    final discount = widget.order.discount ?? 0.0;
+    final totalPayment = subtotal - discount;
 
     return Column(
       children: [
         _buildSummaryRow('Subtotal', '${_getCurrencySymbol()}${subtotal.toStringAsFixed(2)}'),
         if (discount > 0) _buildSummaryRow('Discount', '-${_getCurrencySymbol()}${discount.toStringAsFixed(2)}'),
-        _buildSummaryRow('Tax Amount', '${_getCurrencySymbol()}${taxAmount.toStringAsFixed(2)}'),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: const BoxDecoration(
@@ -832,9 +900,191 @@ class OrderDetailsModal extends StatelessWidget {
     );
   }
 
+  Widget _buildOrderTimeline() {
+    final steps = _getOrderSteps();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0F0F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Order Progress',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...steps.asMap().entries.map((entry) {
+            final index = entry.key;
+            final step = entry.value;
+            final isLast = index == steps.length - 1;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: step['isCompleted']
+                            ? const Color(0xFF10B981)
+                            : step['isActive']
+                                ? const Color(0xFF3B82F6)
+                                : Colors.grey[300],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        step['isCompleted']
+                            ? Icons.check
+                            : step['isActive']
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                        color: step['isCompleted'] || step['isActive']
+                            ? Colors.white
+                            : Colors.grey[600],
+                        size: 18,
+                      ),
+                    ),
+                    if (!isLast)
+                      Container(
+                        width: 2,
+                        height: 40,
+                        color: step['isCompleted']
+                            ? const Color(0xFF10B981)
+                            : Colors.grey[300],
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          step['title'],
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                            color: step['isCompleted'] || step['isActive']
+                                ? const Color(0xFF1E293B)
+                                : Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          step['description'],
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        if (step['timestamp'] != null)
+                          Text(
+                            step['timestamp'],
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getOrderSteps() {
+    final currentStatus = widget.order.status == 'cancelled'
+        ? 'cancelled'
+        : widget.order.status == 'in_review'
+          ? 'pending'
+          : (widget.order.courierStatus ?? 'unknown');
+
+    final steps = [
+      {
+        'title': 'Order Placed',
+        'description': 'Order has been received and is being processed',
+        'isCompleted': true,
+        'isActive': false,
+        'timestamp': _formatDateTime(widget.order.saleDate),
+      },
+      {
+        'title': 'Order Confirmed',
+        'description': 'Order details have been verified',
+        'isCompleted': widget.order.status != 'pending',
+        'isActive': widget.order.status == 'pending',
+        'timestamp': widget.order.status != 'pending' ? _formatDateTime(widget.order.saleDate) : null,
+      },
+      {
+        'title': 'Sent to Courier',
+        'description': 'Order has been dispatched to courier service',
+        'isCompleted': widget.order.consignmentId != null && widget.order.consignmentId!.isNotEmpty,
+        'isActive': widget.order.status == 'in_review' && (widget.order.consignmentId == null || widget.order.consignmentId!.isEmpty),
+        'timestamp': widget.order.consignmentId != null && widget.order.consignmentId!.isNotEmpty
+            ? 'Tracking ID: ${widget.order.consignmentId}' : null,
+      },
+      {
+        'title': 'Out for Delivery',
+        'description': 'Order is out for delivery',
+        'isCompleted': ['delivered', 'partial_delivered'].contains(currentStatus),
+        'isActive': ['hold', 'returned'].contains(currentStatus),
+        'timestamp': null,
+      },
+      {
+        'title': 'Delivered',
+        'description': 'Order has been delivered successfully',
+        'isCompleted': currentStatus == 'delivered',
+        'isActive': currentStatus == 'partial_delivered',
+        'timestamp': currentStatus == 'delivered' ? 'Order completed' : null,
+      },
+    ];
+
+    if (currentStatus == 'cancelled') {
+      return [
+        steps[0],
+        {
+          'title': 'Order Cancelled',
+          'description': 'Order has been cancelled',
+          'isCompleted': true,
+          'isActive': false,
+          'timestamp': 'Cancelled',
+        },
+      ];
+    }
+
+    return steps;
+  }
+
+  String _formatDateTime(DateTime date) {
+    return '${_formatDate(date)} at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
   // Helper Methods
   String _getDeliveryStatus() {
-    switch (order.courierStatus?.toLowerCase()) {
+    switch (widget.order.courierStatus?.toLowerCase()) {
       case 'delivered':
         return 'Delivered';
       case 'in_transit':
@@ -847,7 +1097,7 @@ class OrderDetailsModal extends StatelessWidget {
   }
 
   Color _getDeliveryStatusColor() {
-    switch (order.courierStatus?.toLowerCase()) {
+    switch (widget.order.courierStatus?.toLowerCase()) {
       case 'delivered':
         return const Color(0xFF53C31B);
       case 'in_transit':
@@ -860,7 +1110,7 @@ class OrderDetailsModal extends StatelessWidget {
   }
 
   String _getPaymentStatus() {
-    switch (order.paymentStatus?.toLowerCase()) {
+    switch (widget.order.paymentStatus?.toLowerCase()) {
       case 'paid':
       case 'completed':
         return 'Paid';
@@ -872,12 +1122,12 @@ class OrderDetailsModal extends StatelessWidget {
       case 'refunded':
         return 'Refunded';
       default:
-        return order.saleType == 'online_cod' ? 'COD Pending' : 'Pending';
+        return widget.order.saleType == 'online_cod' ? 'COD Pending' : 'Pending';
     }
   }
 
   Color _getPaymentStatusColor() {
-    switch (order.paymentStatus?.toLowerCase()) {
+    switch (widget.order.paymentStatus?.toLowerCase()) {
       case 'paid':
       case 'completed':
         return const Color(0xFF53C31B);
@@ -889,12 +1139,12 @@ class OrderDetailsModal extends StatelessWidget {
       case 'refunded':
         return const Color(0xFFFF8C00);
       default:
-        return order.saleType == 'online_cod' ? const Color(0xFF003DF6) : const Color(0xFF8C8C8C);
+        return widget.order.saleType == 'online_cod' ? const Color(0xFF003DF6) : const Color(0xFF8C8C8C);
     }
   }
 
   Color _getPaymentStatusBackgroundColor() {
-    switch (order.paymentStatus?.toLowerCase()) {
+    switch (widget.order.paymentStatus?.toLowerCase()) {
       case 'paid':
       case 'completed':
         return const Color(0xFFEEF9E8);
@@ -912,8 +1162,8 @@ class OrderDetailsModal extends StatelessWidget {
 
   String _getCurrencySymbol() {
     // Return appropriate currency symbol based on app configuration
-    // For now, defaulting to $ but can be made configurable
-    return '\$';
+    // Using Bangladeshi Taka symbol
+    return '৳';
   }
 
   String _formatDate(DateTime date) {
@@ -931,14 +1181,41 @@ class OrderDetailsModal extends StatelessWidget {
   }
 
   String _getEstimatedArrival() {
-    final estimatedDate = order.saleDate.add(const Duration(days: 2));
-    return _formatDate(estimatedDate);
+    if (_isLoadingEstimate) {
+      return 'Calculating...';
+    }
+
+    if (_estimatedArrival != null) {
+      final confidence = _deliveryStats?['confidence'] ?? 'low';
+      final totalDeliveries = _deliveryStats?['totalDeliveries'] ?? 0;
+
+      String confidenceText = '';
+      switch (confidence) {
+        case 'high':
+          confidenceText = ' (High confidence - $totalDeliveries deliveries)';
+          break;
+        case 'medium':
+          confidenceText = ' (Medium confidence - $totalDeliveries deliveries)';
+          break;
+        case 'low':
+          confidenceText = totalDeliveries > 0
+              ? ' (Low confidence - $totalDeliveries deliveries)'
+              : ' (Estimated)';
+          break;
+      }
+
+      return '$_estimatedArrival$confidenceText';
+    }
+
+    // Fallback
+    final estimatedDate = widget.order.saleDate.add(const Duration(days: 3));
+    return '${_formatDate(estimatedDate)} (Default estimate)';
   }
 
   String _getDeliveryAddress() {
-    return order.recipientAddress ??
-           order.customerAddress ??
-           '${order.customerName}, Delivery Address Not Available';
+    return widget.order.recipientAddress ??
+           widget.order.customerAddress ??
+           '${widget.order.customerName}, Delivery Address Not Available';
   }
 
   void _copyToClipboard(String text) {
@@ -946,7 +1223,7 @@ class OrderDetailsModal extends StatelessWidget {
   }
 
   Future<void> _makePhoneCall() async {
-    final phoneNumber = order.customerPhone ?? order.recipientPhone;
+    final phoneNumber = widget.order.customerPhone ?? widget.order.recipientPhone;
     if (phoneNumber == null || phoneNumber.isEmpty) return;
 
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
@@ -960,7 +1237,7 @@ class OrderDetailsModal extends StatelessWidget {
   }
 
   Future<void> _sendMessage() async {
-    final phoneNumber = order.customerPhone ?? order.recipientPhone;
+    final phoneNumber = widget.order.customerPhone ?? widget.order.recipientPhone;
     if (phoneNumber == null || phoneNumber.isEmpty) return;
 
     final Uri smsUri = Uri(scheme: 'sms', path: phoneNumber);

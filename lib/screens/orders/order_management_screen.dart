@@ -297,6 +297,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   style: TextStyle(
                     color: Colors.green[700],
                     fontWeight: FontWeight.w600,
+                    fontFamily: 'Tiro Bangla',
                   ),
                 ),
               ],
@@ -1111,6 +1112,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                       border: OutlineInputBorder(),
                       isDense: true,
                       prefixText: '৳ ',
+                      prefixStyle: TextStyle(fontFamily: 'Tiro Bangla'),
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) {
@@ -1318,7 +1320,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text('পাঠানো হচ্ছে...'),
+              const Text('পাঠানো হচ্ছে...', style: TextStyle(fontFamily: 'Tiro Bangla')),
             ],
           ),
           backgroundColor: Colors.blue,

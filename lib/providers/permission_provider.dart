@@ -144,10 +144,10 @@ class PermissionProvider extends ChangeNotifier {
 
     final items = <NavigationItem>[];
 
-    // Always show dashboard
+    // Always show orders (dashboard replacement)
     items.add(const NavigationItem(
-      route: '/home',
-      label: 'Dashboard',
+      route: '/orders',
+      label: 'Orders',
       icon: 'dashboard',
     ));
 
