@@ -2,6 +2,7 @@ class Sale {
   final String id;
   final String productId;
   final String productName;
+  final String? productImage; // Product image URL
   final String locationId;
   final String locationName;
   final int quantity;
@@ -42,6 +43,7 @@ class Sale {
     required this.id,
     required this.productId,
     required this.productName,
+    this.productImage,
     required this.locationId,
     required this.locationName,
     required this.quantity,
@@ -83,6 +85,7 @@ class Sale {
       id: json['id'] ?? '',
       productId: json['product_id'] ?? '',
       productName: json['product_name'] ?? '',
+      productImage: json['product_image'],
       locationId: json['location_id'] ?? '',
       locationName: json['location_name'] ?? '',
       quantity: json['quantity'] ?? 0,
@@ -133,6 +136,7 @@ class Sale {
       'id': id,
       'product_id': productId,
       'product_name': productName,
+      'product_image': productImage,
       'location_id': locationId,
       'location_name': locationName,
       'quantity': quantity,

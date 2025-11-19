@@ -49,7 +49,7 @@ class SalesProvider extends ChangeNotifier {
       final response =
           await _supabase.from(SupabaseConfig.salesTable).select('''
             *,
-            products:product_id(product_name, price),
+            products:product_id(product_name, price, image_url),
             stock_locations:location_id(location_name)
           ''').order('sale_date', ascending: false);
 
@@ -58,6 +58,7 @@ class SalesProvider extends ChangeNotifier {
         final flatJson = Map<String, dynamic>.from(json);
         if (json['products'] != null) {
           flatJson['product_name'] = json['products']['product_name'];
+          flatJson['product_image'] = json['products']['image_url'];
         }
         if (json['stock_locations'] != null) {
           flatJson['location_name'] = json['stock_locations']['location_name'];
@@ -333,7 +334,7 @@ class SalesProvider extends ChangeNotifier {
       final response =
           await _supabase.from(SupabaseConfig.salesTable).select('''
             *,
-            products:product_id(product_name),
+            products:product_id(product_name, image_url),
             stock_locations:location_id(location_name)
           ''').order('sale_date', ascending: false).limit(limit);
 
@@ -341,6 +342,7 @@ class SalesProvider extends ChangeNotifier {
         final flatJson = Map<String, dynamic>.from(json);
         if (json['products'] != null) {
           flatJson['product_name'] = json['products']['product_name'];
+          flatJson['product_image'] = json['products']['image_url'];
         }
         if (json['stock_locations'] != null) {
           flatJson['location_name'] = json['stock_locations']['location_name'];
@@ -528,6 +530,10 @@ class SalesProvider extends ChangeNotifier {
       AppLogger.info('Order validation passed. Calling Steadfast API...');
 
       // Create courier order
+      // Map delivery type to Steadfast API format
+      // 0 = Home Delivery, 1 = Point Delivery
+      final deliveryTypeInt = sale.deliveryType == 'point_delivery' ? 1 : 0;
+
       final response = await _courierService.createOrder(
         invoice: saleId,
         recipientName: sale.recipientName!,
@@ -535,6 +541,7 @@ class SalesProvider extends ChangeNotifier {
         recipientAddress: sale.recipientAddress!,
         codAmount: sale.codAmount!,
         notes: sale.courierNotes,
+        deliveryType: deliveryTypeInt,
       );
 
       AppLogger.info('Steadfast API response received - Success: ${response?.success}, Message: ${response?.message}');

@@ -22,6 +22,7 @@ class SteadFastService {
     required String recipientAddress,
     required double codAmount,
     String? notes,
+    int? deliveryType, // 0 = Home Delivery, 1 = Point Delivery
   }) async {
     try {
       AppLogger.info('Creating Steadfast order for invoice: $invoice');
@@ -47,6 +48,7 @@ class SteadFastService {
           recipientAddress: recipientAddress,
           codAmount: codAmount,
           notes: notes,
+          deliveryType: deliveryType,
         );
         return SteadFastOrderResponse(
           success: true,
@@ -63,6 +65,7 @@ class SteadFastService {
         'recipient_address': recipientAddress,
         'cod_amount': codAmount,
         if (notes?.isNotEmpty == true) 'note': notes,
+        if (deliveryType != null) 'delivery_type': deliveryType,
       };
 
       // Make API call
@@ -300,6 +303,7 @@ class SteadFastService {
     required String recipientAddress,
     required double codAmount,
     String? notes,
+    int? deliveryType,
   }) async {
     try {
       final orderData = {
@@ -309,6 +313,7 @@ class SteadFastService {
         'recipient_address': recipientAddress,
         'cod_amount': codAmount,
         if (notes?.isNotEmpty == true) 'note': notes,
+        if (deliveryType != null) 'delivery_type': deliveryType,
       };
 
       await SyncService.addPendingAction(
